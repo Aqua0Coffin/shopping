@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your-Stylist-Sakhy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Raleway:wght@200;300;400;500&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --gold-pale: #F5E6B8;
+    --deep: #1A0A00;
+    --crimson: #8B1A1A;
+    --ivory: #FAF6EE;
+    --silk: #F0E6D3;
+    --charcoal: #2C2416;
+    --muted: #8A7B6A;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--ivory);
+    color: var(--deep);
+    font-family: 'Raleway', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* ── CUSTOM CURSOR ── */
+  .cursor {
+    width: 12px; height: 12px;
+    background: var(--gold);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none; z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s ease, width 0.3s ease, height 0.3s ease, background 0.3s ease;
+  }
+  .cursor-ring {
+    width: 36px; height: 36px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none; z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.15s ease, width 0.3s, height 0.3s, border-color 0.3s;
+    opacity: 0.7;
+  }
+  body:has(a:hover) .cursor, body:has(button:hover) .cursor { width: 20px; height: 20px; background: var(--crimson); }
+  body:has(a:hover) .cursor-ring, body:has(button:hover) .cursor-ring { width: 60px; height: 60px; border-color: var(--crimson); }
+
+  /* ── LOADER ── */
+  .loader {
+    position: fixed; inset: 0;
+    background: var(--deep);
+    z-index: 10000;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 24px;
+    animation: loaderOut 0.8s ease 2.4s forwards;
+  }
+  .loader-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(36px, 8vw, 72px);
+    color: var(--gold);
+    letter-spacing: 0.3em;
+    font-weight: 300;
+    overflow: hidden;
+  }
+  .loader-text span {
+    display: inline-block;
+    animation: letterRise 0.6s ease forwards;
+    opacity: 0; transform: translateY(40px);
+  }
+  .loader-text span:nth-child(1) { animation-delay: 0.1s; }
+  .loader-text span:nth-child(2) { animation-delay: 0.2s; }
+  .loader-text span:nth-child(3) { animation-delay: 0.3s; }
+  .loader-text span:nth-child(4) { animation-delay: 0.4s; }
+  .loader-text span:nth-child(5) { animation-delay: 0.5s; }
+  .loader-bar {
+    width: 200px; height: 1px;
+    background: rgba(201,168,76,0.2);
+    position: relative; overflow: hidden;
+  }
+  .loader-bar::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: var(--gold);
+    transform: translateX(-100%);
+    animation: barFill 1.8s ease 0.6s forwards;
+  }
+  .loader-sub {
+    font-family: 'Raleway', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: rgba(201,168,76,0.5);
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeIn 0.5s ease 1s forwards;
+  }
+  @keyframes letterRise { to { opacity: 1; transform: translateY(0); } }
+  @keyframes barFill { to { transform: translateX(0); } }
+  @keyframes loaderOut { to { opacity: 0; pointer-events: none; transform: translateY(-20px); } }
+  @keyframes fadeIn { to { opacity: 1; } }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; width: 100%; z-index: 1000;
+    padding: 28px 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: all 0.5s ease;
+  }
+  nav.scrolled {
+    padding: 16px 60px;
+    background: rgba(250,246,238,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+    box-shadow: 0 4px 30px rgba(26,10,0,0.05);
+  }
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    color: var(--deep);
+    text-decoration: none;
+    position: relative;
+  }
+  .nav-logo::after {
+    content: '';
+    position: absolute; bottom: -4px; left: 0; right: 0;
+    height: 1px; background: var(--gold);
+    transform: scaleX(0); transition: transform 0.4s ease;
+  }
+  .nav-logo:hover::after { transform: scaleX(1); }
+  .nav-links { display: flex; gap: 40px; align-items: center; }
+  .nav-links a {
+    font-size: 11px; letter-spacing: 0.25em;
+    text-transform: uppercase; color: var(--charcoal);
+    text-decoration: none; position: relative;
+    transition: color 0.3s;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute; bottom: -3px; left: 0;
+    width: 0; height: 1px; background: var(--gold);
+    transition: width 0.3s ease;
+  }
+  .nav-links a:hover { color: var(--gold); }
+  .nav-links a:hover::after { width: 100%; }
+  .nav-cta {
+    padding: 10px 28px;
+    border: 1px solid var(--gold);
+    color: var(--gold) !important;
+    letter-spacing: 0.2em !important;
+    transition: all 0.4s ease !important;
+    background: transparent;
+  }
+  .nav-cta:hover { background: var(--gold) !important; color: var(--ivory) !important; }
+  .nav-cta::after { display: none !important; }
+
+  /* ── HERO ── */
+  .hero {
+    height: 100vh; min-height: 700px;
+    position: relative; overflow: hidden;
+    display: flex; align-items: center;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #1A0A00 0%, #2C1810 40%, #3D2015 70%, #1A0A00 100%);
+  }
+  .hero-pattern {
+    position: absolute; inset: 0; opacity: 0.06;
+    background-image:
+      repeating-linear-gradient(45deg, var(--gold) 0, var(--gold) 1px, transparent 0, transparent 50%),
+      repeating-linear-gradient(-45deg, var(--gold) 0, var(--gold) 1px, transparent 0, transparent 50%);
+    background-size: 30px 30px;
+  }
+  .hero-glow {
+    position: absolute; top: 20%; right: 10%;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(201,168,76,0.15) 0%, transparent 70%);
+    animation: glowPulse 4s ease-in-out infinite;
+  }
+  .hero-glow2 {
+    position: absolute; bottom: 10%; left: 5%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(139,26,26,0.12) 0%, transparent 70%);
+    animation: glowPulse 5s ease-in-out 1s infinite;
+  }
+  @keyframes glowPulse { 0%,100%{opacity:0.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.1)} }
+
+  .hero-content {
+    position: relative; z-index: 2;
+    padding: 0 60px; max-width: 800px;
+  }
+  .hero-eyebrow {
+    font-size: 11px; letter-spacing: 0.5em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 28px;
+    opacity: 0; transform: translateY(20px);
+    animation: slideUp 0.8s ease 2.8s forwards;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .hero-eyebrow::before {
+    content: ''; display: block;
+    width: 40px; height: 1px; background: var(--gold);
+  }
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(56px, 8vw, 100px);
+    font-weight: 300; line-height: 1.0;
+    color: var(--ivory);
+    opacity: 0; transform: translateY(30px);
+    animation: slideUp 1s ease 3s forwards;
+    margin-bottom: 20px;
+  }
+  .hero-title em {
+    font-style: italic; color: var(--gold);
+    display: block;
+  }
+  .hero-sub {
+    font-size: 14px; letter-spacing: 0.08em;
+    line-height: 1.9; color: rgba(250,246,238,0.6);
+    max-width: 420px; margin-bottom: 48px;
+    opacity: 0; transform: translateY(20px);
+    animation: slideUp 0.8s ease 3.2s forwards;
+  }
+  .hero-actions {
+    display: flex; gap: 20px; align-items: center;
+    opacity: 0; transform: translateY(20px);
+    animation: slideUp 0.8s ease 3.4s forwards;
+  }
+  .btn-primary {
+    padding: 16px 44px;
+    background: var(--gold);
+    color: var(--deep);
+    font-family: 'Raleway', sans-serif;
+    font-size: 11px; letter-spacing: 0.3em;
+    text-transform: uppercase; font-weight: 500;
+    border: none; cursor: none;
+    transition: all 0.4s ease;
+    position: relative; overflow: hidden;
+    text-decoration: none; display: inline-block;
+  }
+  .btn-primary::after {
+    content: ''; position: absolute;
+    inset: 0; background: var(--deep);
+    transform: translateX(-101%);
+    transition: transform 0.4s ease;
+  }
+  .btn-primary span { position: relative; z-index: 1; }
+  .btn-primary:hover { color: var(--gold); }
+  .btn-primary:hover::after { transform: translateX(0); }
+
+  .btn-outline {
+    padding: 16px 44px;
+    border: 1px solid rgba(250,246,238,0.3);
+    color: var(--ivory);
+    font-size: 11px; letter-spacing: 0.3em;
+    text-transform: uppercase; font-weight: 400;
+    cursor: none; text-decoration: none;
+    display: inline-block;
+    transition: all 0.4s ease;
+  }
+  .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
+  .hero-scroll {
+    position: absolute; bottom: 40px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    opacity: 0; animation: fadeIn 0.8s ease 3.8s forwards;
+  }
+  .hero-scroll span {
+    font-size: 10px; letter-spacing: 0.4em;
+    text-transform: uppercase; color: rgba(201,168,76,0.6);
+  }
+  .scroll-line {
+    width: 1px; height: 50px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    animation: scrollAnim 1.8s ease-in-out infinite;
+  }
+  @keyframes scrollAnim { 0%{transform:scaleY(0);transform-origin:top} 50%{transform:scaleY(1);transform-origin:top} 51%{transform-origin:bottom} 100%{transform:scaleY(0);transform-origin:bottom} }
+  @keyframes slideUp { to { opacity:1; transform:translateY(0); } }
+
+  /* ── MARQUEE ── */
+  .marquee-section {
+    background: var(--deep);
+    padding: 18px 0; overflow: hidden;
+    border-top: 1px solid rgba(201,168,76,0.2);
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+  }
+  .marquee-track {
+    display: flex; gap: 60px;
+    width: max-content;
+    animation: marqueeScroll 25s linear infinite;
+  }
+  .marquee-item {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px; letter-spacing: 0.3em;
+    color: rgba(201,168,76,0.7);
+    text-transform: uppercase; white-space: nowrap;
+    display: flex; align-items: center; gap: 60px;
+  }
+  .marquee-item::after { content: '◆'; font-size: 8px; color: var(--crimson); }
+  @keyframes marqueeScroll { to { transform: translateX(-50%); } }
+
+  /* ── SECTION HEADERS ── */
+  .section-header {
+    text-align: center; margin-bottom: 64px;
+  }
+  .section-tag {
+    font-size: 10px; letter-spacing: 0.5em;
+    text-transform: uppercase; color: var(--gold);
+    display: block; margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(36px, 5vw, 60px);
+    font-weight: 400; line-height: 1.1;
+    color: var(--deep);
+  }
+  .section-title em { font-style: italic; color: var(--crimson); }
+  .section-divider {
+    width: 60px; height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
+    margin: 20px auto 0;
+  }
+
+  /* ── COLLECTIONS ── */
+  .collections { padding: 120px 60px; }
+  .collections-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+  .collection-card {
+    position: relative; overflow: hidden;
+    aspect-ratio: 3/4; cursor: none;
+  }
+  .collection-card:first-child { grid-row: span 2; aspect-ratio: auto; }
+  .card-bg {
+    width: 100%; height: 100%;
+    position: relative; overflow: hidden;
+    transition: transform 0.8s ease;
+  }
+  .collection-card:hover .card-bg { transform: scale(1.05); }
+  .card-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: filter 0.6s ease;
+  }
+  .card-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(26,10,0,0.85) 0%, rgba(26,10,0,0.2) 50%, transparent 100%);
+    transition: opacity 0.4s ease;
+  }
+  .collection-card:hover .card-overlay { opacity: 0.7; }
+  .card-content {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 32px;
+    transform: translateY(10px);
+    transition: transform 0.4s ease;
+  }
+  .collection-card:hover .card-content { transform: translateY(0); }
+  .card-tag {
+    font-size: 10px; letter-spacing: 0.4em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 8px; display: block;
+  }
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 400;
+    color: var(--ivory); line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .card-link {
+    font-size: 10px; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--gold);
+    text-decoration: none; display: inline-flex;
+    align-items: center; gap: 8px;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.4s ease 0.1s, transform 0.4s ease 0.1s;
+  }
+  .card-link::after { content: '→'; }
+  .collection-card:hover .card-link { opacity: 1; transform: translateY(0); }
+
+  /* Collection card colors (fabric-like) */
+  .cc-1 { background: linear-gradient(135deg, #8B1A1A 0%, #4A0E0E 50%, #2A0808 100%); }
+  .cc-2 { background: linear-gradient(135deg, #1A3A5C 0%, #0D2240 100%); }
+  .cc-3 { background: linear-gradient(135deg, #2C5530 0%, #1A3320 100%); }
+  .cc-4 { background: linear-gradient(135deg, #4A2C6B 0%, #2A1040 100%); }
+  .cc-5 { background: linear-gradient(135deg, #5C3A1A 0%, #3A2010 100%); }
+
+  /* Fabric pattern overlays */
+  .fp { position: absolute; inset: 0; opacity: 0.12; }
+  .fp-1 { background-image: repeating-linear-gradient(30deg, gold 0,gold 1px,transparent 0,transparent 10px), repeating-linear-gradient(-30deg, gold 0,gold 1px,transparent 0,transparent 10px); }
+  .fp-2 { background-image: repeating-linear-gradient(0deg, rgba(255,215,0,0.8) 0,rgba(255,215,0,0.8) 1px,transparent 0,transparent 8px), repeating-linear-gradient(90deg, rgba(255,215,0,0.8) 0,rgba(255,215,0,0.8) 1px,transparent 0,transparent 8px); }
+  .fp-3 { background-image: radial-gradient(circle, rgba(255,215,0,0.6) 1px, transparent 1px); background-size: 12px 12px; }
+  .fp-4 { background-image: repeating-linear-gradient(45deg, rgba(255,215,0,0.6) 0,rgba(255,215,0,0.6) 1px,transparent 0,transparent 8px); }
+  .fp-5 { background-image: repeating-linear-gradient(-45deg, rgba(255,215,0,0.6) 0,rgba(255,215,0,0.6) 1px,transparent 0,transparent 6px), repeating-linear-gradient(45deg, rgba(255,215,0,0.6) 0,rgba(255,215,0,0.6) 1px,transparent 0,transparent 6px); }
+
+  /* ── HERITAGE STRIP ── */
+  .heritage {
+    padding: 100px 0;
+    background: var(--deep);
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .heritage-bg-text {
+    position: absolute;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 180px; font-weight: 300;
+    color: rgba(201,168,76,0.04);
+    white-space: nowrap; letter-spacing: 0.1em;
+    top: 50%; transform: translateY(-50%);
+    pointer-events: none;
+    animation: heritageDrift 20s linear infinite;
+  }
+  @keyframes heritageDrift { from{transform:translateY(-50%) translateX(0)} to{transform:translateY(-50%) translateX(-50%)} }
+
+  .heritage-content {
+    position: relative; z-index: 2;
+    text-align: center; padding: 0 60px;
+  }
+  .heritage-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 120px; font-weight: 300; line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(201,168,76,0.4);
+    display: block; margin-bottom: -20px;
+  }
+  .heritage-label {
+    font-size: 12px; letter-spacing: 0.5em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 32px; display: block;
+  }
+  .heritage-quote {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(24px, 4vw, 44px);
+    font-style: italic; font-weight: 300;
+    color: var(--ivory); line-height: 1.4;
+    max-width: 700px; margin: 0 auto 32px;
+  }
+  .heritage-author {
+    font-size: 11px; letter-spacing: 0.4em;
+    text-transform: uppercase; color: rgba(201,168,76,0.5);
+  }
+
+  /* ── STATS ── */
+  .stats {
+    padding: 100px 60px;
+    background: var(--silk);
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+  .stat {
+    padding: 48px 40px; text-align: center;
+    border-right: 1px solid rgba(201,168,76,0.2);
+    position: relative;
+  }
+  .stat:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 64px; font-weight: 300;
+    color: var(--deep); line-height: 1; margin-bottom: 8px;
+    display: flex; align-items: flex-start; justify-content: center;
+  }
+  .stat-num sup {
+    font-size: 24px; margin-top: 8px; color: var(--gold);
+    font-family: 'Raleway', sans-serif; font-weight: 300;
+  }
+  .stat-num span { color: var(--gold); }
+  .stat-label {
+    font-size: 11px; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--muted);
+  }
+
+  /* ── FEATURED ── */
+  .featured { padding: 120px 60px; background: var(--ivory); }
+  .featured-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px; margin-top: 64px;
+  }
+  .product-card {
+    position: relative; cursor: none;
+    group: true;
+  }
+  .product-img-wrap {
+    position: relative; overflow: hidden;
+    aspect-ratio: 2/3; margin-bottom: 16px;
+    background: var(--silk);
+  }
+  .product-img-bg {
+    width: 100%; height: 100%;
+    transition: transform 0.7s ease;
+  }
+  .product-card:hover .product-img-bg { transform: scale(1.06); }
+  .product-badge {
+    position: absolute; top: 16px; left: 16px;
+    padding: 4px 12px;
+    font-size: 9px; letter-spacing: 0.3em;
+    text-transform: uppercase;
+    background: var(--crimson); color: var(--ivory);
+  }
+  .product-quick {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 16px;
+    background: rgba(26,10,0,0.8);
+    backdrop-filter: blur(4px);
+    text-align: center;
+    transform: translateY(100%);
+    transition: transform 0.4s ease;
+  }
+  .product-card:hover .product-quick { transform: translateY(0); }
+  .product-quick span {
+    font-size: 10px; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--gold);
+  }
+  .product-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight: 400; margin-bottom: 4px;
+    color: var(--deep);
+  }
+  .product-type {
+    font-size: 11px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .product-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; color: var(--crimson);
+  }
+
+  /* Product color swatches */
+  .p1 { background: linear-gradient(135deg, #8B1A1A, #D4A17A, #8B1A1A); }
+  .p2 { background: linear-gradient(135deg, #1A3A5C, #C9A84C, #1A3A5C); }
+  .p3 { background: linear-gradient(135deg, #2C5530, #E8C97A, #2C5530); }
+  .p4 { background: linear-gradient(135deg, #4A2C6B, #F5E6B8, #4A2C6B); }
+
+  .pf-pattern { position: absolute; inset: 0; opacity: 0.15; }
+
+  /* ── WEAVES ── */
+  .weaves { padding: 100px 60px; background: var(--deep); }
+  .weaves .section-title { color: var(--ivory); }
+  .weaves .section-tag { color: var(--gold); }
+  .weaves-list {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 1px; margin-top: 64px;
+  }
+  .weave-item {
+    padding: 40px 24px;
+    background: rgba(255,255,255,0.03);
+    text-align: center;
+    border: 1px solid rgba(201,168,76,0.08);
+    transition: all 0.4s ease;
+    cursor: none;
+    position: relative; overflow: hidden;
+  }
+  .weave-item::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: var(--gold);
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform 0.4s ease;
+    opacity: 0.06;
+  }
+  .weave-item:hover { border-color: rgba(201,168,76,0.3); }
+  .weave-item:hover::before { transform: scaleY(1); }
+  .weave-icon {
+    font-size: 32px; margin-bottom: 16px; display: block;
+  }
+  .weave-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; color: var(--ivory);
+    margin-bottom: 8px;
+  }
+  .weave-origin {
+    font-size: 10px; letter-spacing: 0.25em;
+    text-transform: uppercase; color: rgba(201,168,76,0.5);
+  }
+
+  /* ── PROCESS ── */
+  .process { padding: 120px 60px; background: var(--ivory); }
+  .process-steps {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0; margin-top: 80px; position: relative;
+  }
+  .process-steps::before {
+    content: '';
+    position: absolute; top: 60px; left: 12.5%; right: 12.5%;
+    height: 1px; background: linear-gradient(to right, transparent, var(--gold), transparent);
+  }
+  .process-step { padding: 0 32px; text-align: center; }
+  .step-num {
+    width: 60px; height: 60px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 28px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px; color: var(--gold);
+    background: var(--ivory);
+    position: relative; z-index: 1;
+    transition: all 0.4s ease;
+  }
+  .process-step:hover .step-num {
+    background: var(--gold); color: var(--ivory);
+    transform: scale(1.1);
+  }
+  .step-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; margin-bottom: 12px;
+    color: var(--deep);
+  }
+  .step-desc {
+    font-size: 13px; line-height: 1.8;
+    color: var(--muted);
+  }
+
+  /* ── TESTIMONIALS ── */
+  .testimonials {
+    padding: 100px 60px;
+    background: var(--silk);
+    overflow: hidden;
+  }
+  .testimonials-track {
+    display: flex; gap: 32px;
+    margin-top: 64px;
+    animation: testScroll 30s linear infinite;
+    width: max-content;
+  }
+  .testimonials-track:hover { animation-play-state: paused; }
+  @keyframes testScroll { to { transform: translateX(-50%); } }
+  .testimonial-card {
+    width: 380px; flex-shrink: 0;
+    padding: 40px; background: var(--ivory);
+    border: 1px solid rgba(201,168,76,0.15);
+    position: relative;
+  }
+  .testimonial-card::before {
+    content: '"';
+    position: absolute; top: 20px; left: 32px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 80px; line-height: 1;
+    color: rgba(201,168,76,0.2);
+  }
+  .testimonial-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px; font-style: italic;
+    line-height: 1.7; color: var(--charcoal);
+    margin-bottom: 24px; margin-top: 16px;
+  }
+  .testimonial-stars {
+    color: var(--gold); letter-spacing: 3px;
+    font-size: 12px; margin-bottom: 12px;
+  }
+  .testimonial-author {
+    font-size: 11px; letter-spacing: 0.25em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .testimonial-loc {
+    font-size: 10px; letter-spacing: 0.2em;
+    color: rgba(201,168,76,0.6);
+  }
+
+  /* ── NEWSLETTER ── */
+  .newsletter {
+    padding: 100px 60px;
+    background: var(--deep);
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .newsletter-bg {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.07) 0%, transparent 60%);
+  }
+  .newsletter-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(36px, 5vw, 60px);
+    color: var(--ivory); font-weight: 300;
+    margin-bottom: 16px; position: relative;
+  }
+  .newsletter-sub {
+    font-size: 14px; letter-spacing: 0.05em;
+    color: rgba(250,246,238,0.5); margin-bottom: 48px;
+    position: relative;
+  }
+  .newsletter-form {
+    display: flex; max-width: 480px;
+    margin: 0 auto; position: relative;
+    border-bottom: 1px solid rgba(201,168,76,0.4);
+  }
+  .newsletter-input {
+    flex: 1; background: transparent;
+    border: none; outline: none;
+    padding: 16px 0;
+    font-family: 'Raleway', sans-serif;
+    font-size: 14px; color: var(--ivory);
+    letter-spacing: 0.05em;
+  }
+  .newsletter-input::placeholder { color: rgba(250,246,238,0.3); }
+  .newsletter-btn {
+    background: transparent; border: none;
+    color: var(--gold); font-family: 'Raleway', sans-serif;
+    font-size: 11px; letter-spacing: 0.3em;
+    text-transform: uppercase; cursor: none;
+    padding: 16px 0 16px 24px;
+    transition: color 0.3s; white-space: nowrap;
+  }
+  .newsletter-btn:hover { color: var(--gold-light); }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 80px 60px 40px;
+    background: #0E0500;
+    border-top: 1px solid rgba(201,168,76,0.1);
+  }
+  .footer-grid {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 60px; margin-bottom: 60px;
+  }
+  .footer-brand .nav-logo {
+    color: var(--ivory); display: block; margin-bottom: 20px;
+  }
+  .footer-about {
+    font-size: 13px; line-height: 1.9;
+    color: rgba(250,246,238,0.4); margin-bottom: 28px;
+  }
+  .footer-social { display: flex; gap: 16px; }
+  .social-link {
+    width: 36px; height: 36px;
+    border: 1px solid rgba(201,168,76,0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(201,168,76,0.6); font-size: 14px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  .social-link:hover { border-color: var(--gold); color: var(--gold); }
+  .footer-col h4 {
+    font-size: 11px; letter-spacing: 0.35em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 24px;
+  }
+  .footer-col ul { list-style: none; }
+  .footer-col li { margin-bottom: 12px; }
+  .footer-col a {
+    font-size: 13px; color: rgba(250,246,238,0.4);
+    text-decoration: none; transition: color 0.3s;
+    letter-spacing: 0.05em;
+  }
+  .footer-col a:hover { color: var(--gold); }
+  .footer-bottom {
+    border-top: 1px solid rgba(201,168,76,0.08);
+    padding-top: 32px;
+    display: flex; justify-content: space-between;
+    align-items: center;
+  }
+  .footer-copy {
+    font-size: 12px; color: rgba(250,246,238,0.2);
+    letter-spacing: 0.1em;
+  }
+  .footer-payments { display: flex; gap: 12px; align-items: center; }
+  .payment-chip {
+    padding: 4px 12px;
+    border: 1px solid rgba(201,168,76,0.15);
+    font-size: 10px; letter-spacing: 0.15em;
+    color: rgba(201,168,76,0.4); text-transform: uppercase;
+  }
+
+  /* ── SCROLL REVEAL ── */
+  .reveal {
+    opacity: 0; transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+
+  /* ── FLOATING NAV DOT ── */
+  .page-progress {
+    position: fixed; right: 30px; top: 50%;
+    transform: translateY(-50%);
+    z-index: 500; display: flex;
+    flex-direction: column; gap: 12px;
+  }
+  .progress-dot {
+    width: 6px; height: 6px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    cursor: none; transition: all 0.3s ease;
+    background: transparent;
+  }
+  .progress-dot.active {
+    background: var(--gold); transform: scale(1.4);
+  }
+
+  /* ── BACK TO TOP ── */
+  .back-top {
+    position: fixed; bottom: 40px; right: 40px;
+    width: 48px; height: 48px;
+    background: var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    cursor: none; z-index: 500;
+    opacity: 0; transform: translateY(20px);
+    transition: all 0.4s ease;
+    font-size: 20px; color: var(--deep);
+  }
+  .back-top.visible { opacity: 1; transform: translateY(0); }
+  .back-top:hover { background: var(--deep); color: var(--gold); }
+
+  @media (max-width: 1024px) {
+    nav { padding: 20px 30px; }
+    nav.scrolled { padding: 14px 30px; }
+    .hero-content { padding: 0 30px; }
+    .collections { padding: 80px 30px; }
+    .collections-grid { grid-template-columns: 1fr 1fr; }
+    .collection-card:first-child { grid-row: span 1; }
+    .stats { grid-template-columns: repeat(2,1fr); padding: 60px 30px; }
+    .featured { padding: 80px 30px; }
+    .featured-grid { grid-template-columns: repeat(2,1fr); }
+    .weaves-list { grid-template-columns: repeat(3,1fr); }
+    .process { padding: 80px 30px; }
+    .process-steps { grid-template-columns: repeat(2,1fr); }
+    .process-steps::before { display: none; }
+    .testimonials { padding: 60px 30px; }
+    .newsletter { padding: 60px 30px; }
+    footer { padding: 60px 30px 30px; }
+    .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
+    .nav-links { gap: 20px; }
+    .weaves { padding: 60px 30px; }
+    .page-progress { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- LOADER -->
+<div class="loader" id="loader">
+  <div class="loader-text">
+    <span>S</span><span>A</span><span>K</span><span>H</span><span>Y</span>
+  </div>
+  <div class="loader-bar"></div>
+  <div class="loader-sub">Modern drapes for the contemporary queen</div>
+</div>
+
+<!-- PAGE PROGRESS DOTS -->
+<div class="page-progress" id="pageProgress">
+  <div class="progress-dot active" data-section="hero"></div>
+  <div class="progress-dot" data-section="collections"></div>
+  <div class="progress-dot" data-section="featured"></div>
+  <div class="progress-dot" data-section="weaves"></div>
+  <div class="progress-dot" data-section="process"></div>
+  <div class="progress-dot" data-section="testimonials"></div>
+</div>
+
+<!-- BACK TO TOP -->
+<div class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <a class="nav-logo" href="#">Your-Stylist-Sakhy</a>
+  <div class="nav-links">
+    <a href="#collections">Collections</a>
+    <a href="#featured">Sarees</a>
+    <a href="#weaves">Weaves</a>
+    <a href="#process">Craftsmanship</a>
+    <a href="#testimonials">Stories</a>
+    <a class="nav-cta" href="#">Book Consultation</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-pattern"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">New Collection 2026</div>
+    <h1 class="hero-title">
+      Draped in<br>
+      <em>Legacy</em>
+    </h1>
+    <p class="hero-sub">Handwoven masterpieces born from centuries of tradition — each saree a poem in silk, a story passed down through artisan hands.</p>
+    <div class="hero-actions">
+      <a class="btn-primary" href="#collections"><span>Explore Collections</span></a>
+      <a class="btn-outline" href="#process">Our Craft</a>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-section">
+  <div class="marquee-track">
+    <div class="marquee-item">Kanjivaram Silk</div>
+    <div class="marquee-item">Banarasi Brocade</div>
+    <div class="marquee-item">Chanderi Cotton</div>
+    <div class="marquee-item">Pochampally Ikat</div>
+    <div class="marquee-item">Paithani Weave</div>
+    <div class="marquee-item">Dhaka Muslin</div>
+    <div class="marquee-item">Sambalpuri Silk</div>
+    <div class="marquee-item">Gadwal Silk</div>
+    <!-- duplicate for infinite -->
+    <div class="marquee-item">Kanjivaram Silk</div>
+    <div class="marquee-item">Banarasi Brocade</div>
+    <div class="marquee-item">Chanderi Cotton</div>
+    <div class="marquee-item">Pochampally Ikat</div>
+    <div class="marquee-item">Paithani Weave</div>
+    <div class="marquee-item">Dhaka Muslin</div>
+    <div class="marquee-item">Sambalpuri Silk</div>
+    <div class="marquee-item">Gadwal Silk</div>
+  </div>
+</div>
+
+<!-- COLLECTIONS -->
+<section class="collections" id="collections">
+  <div class="section-header reveal">
+    <span class="section-tag">Curated for You</span>
+    <h2 class="section-title">Our <em>Collections</em></h2>
+    <div class="section-divider"></div>
+  </div>
+  <div class="collections-grid">
+    <div class="collection-card reveal">
+      <div class="card-bg cc-1" style="height:100%">
+        <div class="fp fp-1"></div>
+        <div class="card-overlay"></div>
+        <div class="card-content">
+          <span class="card-tag">Signature</span>
+          <div class="card-title">Bridal<br>Kanjivaram</div>
+          <a class="card-link" href="#">View Collection</a>
+        </div>
+      </div>
+    </div>
+    <div class="collection-card reveal reveal-delay-1">
+      <div class="card-bg cc-2">
+        <div class="fp fp-2"></div>
+        <div class="card-overlay"></div>
+        <div class="card-content">
+          <span class="card-tag">Festive</span>
+          <div class="card-title">Banarasi<br>Brocade</div>
+          <a class="card-link" href="#">View Collection</a>
+        </div>
+      </div>
+    </div>
+    <div class="collection-card reveal reveal-delay-2">
+      <div class="card-bg cc-3">
+        <div class="fp fp-3"></div>
+        <div class="card-overlay"></div>
+        <div class="card-content">
+          <span class="card-tag">Everyday</span>
+          <div class="card-title">Chanderi<br>Elegance</div>
+          <a class="card-link" href="#">View Collection</a>
+        </div>
+      </div>
+    </div>
+    <div class="collection-card reveal reveal-delay-1">
+      <div class="card-bg cc-4">
+        <div class="fp fp-4"></div>
+        <div class="card-overlay"></div>
+        <div class="card-content">
+          <span class="card-tag">Contemporary</span>
+          <div class="card-title">Pochampally<br>Ikat</div>
+          <a class="card-link" href="#">View Collection</a>
+        </div>
+      </div>
+    </div>
+    <div class="collection-card reveal reveal-delay-2">
+      <div class="card-bg cc-5">
+        <div class="fp fp-5"></div>
+        <div class="card-overlay"></div>
+        <div class="card-content">
+          <span class="card-tag">Heritage</span>
+          <div class="card-title">Paithani<br>Gold</div>
+          <a class="card-link" href="#">View Collection</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HERITAGE -->
+<section class="heritage">
+  <div class="heritage-bg-text">SAKHY SAKHY SAKHY SAKHY SAKHY</div>
+  <div class="heritage-content reveal">
+    <span class="heritage-number">62</span>
+    <span class="heritage-label">Years of Heritage</span>
+    <p class="heritage-quote">"A saree is not merely fabric. It is the warp and weft of a woman's story — woven with the threads of her heritage, her grace, her strength."</p>
+    <span class="heritage-author">— Sakhy, Founder</span>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats" id="statsSection">
+  <div class="stat reveal">
+    <div class="stat-num">10<sup>K</sup><span>+</span></div>
+    <div class="stat-label">Sarees Crafted</div>
+  </div>
+  <div class="stat reveal reveal-delay-1">
+    <div class="stat-num">200<span>+</span></div>
+    <div class="stat-label">Master Weavers</div>
+  </div>
+  <div class="stat reveal reveal-delay-2">
+    <div class="stat-num">28<span></span></div>
+    <div class="stat-label">Weave Traditions</div>
+  </div>
+  <div class="stat reveal reveal-delay-3">
+    <div class="stat-num">62</div>
+    <div class="stat-label">Years of Legacy</div>
+  </div>
+</div>
+
+<!-- FEATURED -->
+<section class="featured" id="featured">
+  <div class="section-header reveal">
+    <span class="section-tag">New Arrivals</span>
+    <h2 class="section-title">Curated <em>Masterpieces</em></h2>
+    <div class="section-divider"></div>
+  </div>
+  <div class="featured-grid">
+
+    <div class="product-card reveal">
+      <div class="product-img-wrap">
+        <div class="product-img-bg p1" style="height:100%">
+          <div class="pf-pattern fp fp-1"></div>
+        </div>
+        <div class="product-badge">New</div>
+        <div class="product-quick"><span>Quick View</span></div>
+      </div>
+      <div class="product-type">Kanjivaram Silk</div>
+      <div class="product-name">Bridal Red Zari</div>
+      <div class="product-price">₹ 48,500</div>
+    </div>
+
+    <div class="product-card reveal reveal-delay-1">
+      <div class="product-img-wrap">
+        <div class="product-img-bg p2" style="height:100%">
+          <div class="pf-pattern fp fp-2"></div>
+        </div>
+        <div class="product-badge" style="background:var(--gold);color:var(--deep)">Bestseller</div>
+        <div class="product-quick"><span>Quick View</span></div>
+      </div>
+      <div class="product-type">Banarasi Silk</div>
+      <div class="product-name">Royal Navy Brocade</div>
+      <div class="product-price">₹ 32,000</div>
+    </div>
+
+    <div class="product-card reveal reveal-delay-2">
+      <div class="product-img-wrap">
+        <div class="product-img-bg p3" style="height:100%">
+          <div class="pf-pattern fp fp-3"></div>
+        </div>
+        <div class="product-quick"><span>Quick View</span></div>
+      </div>
+      <div class="product-type">Chanderi Cotton Silk</div>
+      <div class="product-name">Forest Mist Sheer</div>
+      <div class="product-price">₹ 12,800</div>
+    </div>
+
+    <div class="product-card reveal reveal-delay-3">
+      <div class="product-img-wrap">
+        <div class="product-img-bg p4" style="height:100%">
+          <div class="pf-pattern fp fp-4"></div>
+        </div>
+        <div class="product-badge" style="background:var(--crimson)">Limited</div>
+        <div class="product-quick"><span>Quick View</span></div>
+      </div>
+      <div class="product-type">Paithani Silk</div>
+      <div class="product-name">Violet Peacock</div>
+      <div class="product-price">₹ 65,000</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:56px" class="reveal">
+    <a class="btn-primary" href="#" style="display:inline-block"><span>View All Sarees</span></a>
+  </div>
+</section>
+
+<!-- WEAVES -->
+<section class="weaves" id="weaves">
+  <div class="section-header reveal">
+    <span class="section-tag">Traditions Preserved</span>
+    <h2 class="section-title" style="color:var(--ivory)">Living <em>Weave</em> Heritage</h2>
+    <div class="section-divider"></div>
+  </div>
+  <div class="weaves-list">
+    <div class="weave-item reveal">
+      <span class="weave-icon">🧵</span>
+      <div class="weave-name">Kanjivaram</div>
+      <div class="weave-origin">Tamil Nadu</div>
+    </div>
+    <div class="weave-item reveal reveal-delay-1">
+      <span class="weave-icon">✨</span>
+      <div class="weave-name">Banarasi</div>
+      <div class="weave-origin">Uttar Pradesh</div>
+    </div>
+    <div class="weave-item reveal reveal-delay-2">
+      <span class="weave-icon">🌸</span>
+      <div class="weave-name">Paithani</div>
+      <div class="weave-origin">Maharashtra</div>
+    </div>
+    <div class="weave-item reveal reveal-delay-3">
+      <span class="weave-icon">🦚</span>
+      <div class="weave-name">Pochampally</div>
+      <div class="weave-origin">Telangana</div>
+    </div>
+    <div class="weave-item reveal reveal-delay-4">
+      <span class="weave-icon">🌿</span>
+      <div class="weave-name">Chanderi</div>
+      <div class="weave-origin">Madhya Pradesh</div>
+    </div>
+    <div class="weave-item reveal">
+      <span class="weave-icon">💠</span>
+      <div class="weave-name">Sambalpuri</div>
+      <div class="weave-origin">Odisha</div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section class="process" id="process">
+  <div class="section-header reveal">
+    <span class="section-tag">The Art Behind</span>
+    <h2 class="section-title">Crafted with <em>Devotion</em></h2>
+    <div class="section-divider"></div>
+  </div>
+  <div class="process-steps">
+    <div class="process-step reveal">
+      <div class="step-num">I</div>
+      <div class="step-title">Thread Selection</div>
+      <p class="step-desc">Only the finest mulberry silk and pure zari threads are hand-selected from trusted sources across India.</p>
+    </div>
+    <div class="process-step reveal reveal-delay-1">
+      <div class="step-num">II</div>
+      <div class="step-title">Design Drawing</div>
+      <p class="step-desc">Master designers sketch intricate motifs by hand — peacocks, lotuses, temple borders — each carrying symbolic meaning.</p>
+    </div>
+    <div class="process-step reveal reveal-delay-2">
+      <div class="step-num">III</div>
+      <div class="step-title">Handloom Weaving</div>
+      <p class="step-desc">Artisan weavers spend days to months on a single saree, interlacing threads with precision passed down through generations.</p>
+    </div>
+    <div class="process-step reveal reveal-delay-3">
+      <div class="step-num">IV</div>
+      <div class="step-title">Quality & Blessing</div>
+      <p class="step-desc">Each finished saree is inspected, pressed, and wrapped with care — a final blessing before it finds its forever home.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials" id="testimonials">
+  <div class="section-header reveal">
+    <span class="section-tag">Stories of Grace</span>
+    <h2 class="section-title">Worn with <em>Love</em></h2>
+    <div class="section-divider"></div>
+  </div>
+  <div style="overflow:hidden">
+  <div class="testimonials-track">
+    <!-- set 1 -->
+    <div class="testimonial-card">
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">My bridal Kanjivaram from Vanya was everything I dreamed of. The weight, the lustre, the gold zari — it felt like wearing a piece of history on the most important day of my life.</p>
+      <div class="testimonial-author">Priya Ramachandran</div>
+      <div class="testimonial-loc">Chennai, Tamil Nadu</div>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">Three generations of women in my family have worn Vanya sarees. The quality has never wavered — each piece tells a story of extraordinary skill and devotion.</p>
+      <div class="testimonial-author">Kavitha Iyer</div>
+      <div class="testimonial-loc">Mumbai, Maharashtra</div>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">The consultation was like stepping into another era. They understood my aesthetic perfectly and guided me to a Paithani that made my mother weep with joy at the wedding.</p>
+      <div class="testimonial-author">Ananya Desai</div>
+      <div class="testimonial-loc">Pune, Maharashtra</div>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">I've worn designer labels from Paris to Milan, but nothing compares to the way a Vanya Banarasi drapes. It is wearable art — elevated, timeless, and deeply Indian.</p>
+      <div class="testimonial-author">Meenakshi Pillai</div>
+      <div class="testimonial-loc">Bengaluru, Karnataka</div>
+    </div>
+    <!-- duplicate set 2 for infinite -->
+    <div class="testimonial-card">
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">My bridal Kanjivaram from Vanya was everything I dreamed of. The weight, the lustre, the gold zari — it felt like wearing a piece of history on the most important day of my life.</p>
+      <div class="testimonial-author">Priya Ramachandran</div>
+      <div class="testimonial-loc">Chennai, Tamil Nadu</div>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">Three generations of women in my family have worn Vanya sarees. The quality has never wavered — each piece tells a story of extraordinary skill and devotion.</p>
+      <div class="testimonial-author">Kavitha Iyer</div>
+      <div class="testimonial-loc">Mumbai, Maharashtra</div>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">The consultation was like stepping into another era. They understood my aesthetic perfectly and guided me to a Paithani that made my mother weep with joy at the wedding.</p>
+      <div class="testimonial-author">Ananya Desai</div>
+      <div class="testimonial-loc">Pune, Maharashtra</div>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-text">I've worn designer labels from Paris to Milan, but nothing compares to the way a Vanya Banarasi drapes. It is wearable art — elevated, timeless, and deeply Indian.</p>
+      <div class="testimonial-author">Meenakshi Pillai</div>
+      <div class="testimonial-loc">Bengaluru, Karnataka</div>
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- NEWSLETTER -->
+<section class="newsletter">
+  <div class="newsletter-bg"></div>
+  <h2 class="newsletter-title reveal">Join the <em style="font-style:italic;color:var(--gold)">Inner Circle</em></h2>
+  <p class="newsletter-sub reveal">Be the first to know about new collections, exclusive events, and heritage stories.</p>
+  <div class="newsletter-form reveal">
+    <input class="newsletter-input" type="email" placeholder="Your email address" />
+    <button class="newsletter-btn">Subscribe →</button>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a class="nav-logo" href="#">SAKHY</a>
+      <p class="footer-about">Heritage Sarees, crafted since 1962. We work directly with master weavers across India to bring you authenticated handloom sarees of unparalleled quality.</p>
+      <div class="footer-social">
+        <a class="social-link" href="#" title="Instagram">✦</a>
+        <a class="social-link" href="#" title="Pinterest">◈</a>
+        <a class="social-link" href="#" title="Facebook">◉</a>
+        <a class="social-link" href="#" title="YouTube">▶</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Collections</h4>
+      <ul>
+        <li><a href="#">Bridal Sarees</a></li>
+        <li><a href="#">Festive Sarees</a></li>
+        <li><a href="#">Everyday Silk</a></li>
+        <li><a href="#">Cotton Sarees</a></li>
+        <li><a href="#">Designer Drapes</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Services</h4>
+      <ul>
+        <li><a href="#">Personal Styling</a></li>
+        <li><a href="#">Blouse Stitching</a></li>
+        <li><a href="#">Gifting</a></li>
+        <li><a href="#">Corporate Orders</a></li>
+        <li><a href="#">Draping Sessions</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Visit Us</h4>
+      <ul>
+        <li><a href="#">Chennai Flagship</a></li>
+        <li><a href="#">Mumbai Boutique</a></li>
+        <li><a href="#">Delhi Studio</a></li>
+        <li><a href="#">Bengaluru Store</a></li>
+        <li><a href="#">+91 98400 00000</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2025 Your-Stylist-Sakhy. All rights reserved.</div>
+    <div class="footer-payments">
+      <div class="payment-chip">Visa</div>
+      <div class="payment-chip">Mastercard</div>
+      <div class="payment-chip">UPI</div>
+      <div class="payment-chip">RazorPay</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  function animCursor() {
+    cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+    rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    requestAnimationFrame(animCursor);
+  }
+  animCursor();
+
+  // Nav scroll
+  const nav = document.getElementById('mainNav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 80);
+    document.getElementById('backTop').classList.toggle('visible', window.scrollY > 400);
+  });
+
+  // Reveal on scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Newsletter submit
+  document.querySelector('.newsletter-btn').addEventListener('click', () => {
+    const input = document.querySelector('.newsletter-input');
+    if (input.value.includes('@')) {
+      input.value = '✓ You\'re on the list!';
+      input.style.color = 'var(--gold)';
+    }
+  });
+</script>
+</body>
+</html>
