@@ -212,6 +212,8 @@ model Order {
   tax       Int         @default(0)
   total     Int
   addressId String
+  reservationExpiresAt DateTime?
+  reservationReleasedAt DateTime?
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
@@ -222,6 +224,7 @@ model Order {
 
   @@index([userId])
   @@index([status])
+  @@index([reservationExpiresAt])
   @@map("orders")
 }
 
@@ -247,7 +250,7 @@ model Payment {
   /// Razorpay's order ID (rzp_order_...)
   providerOrderId     String          @unique
   /// Razorpay's payment ID (rzp_pay_...) — populated after capture
-  providerPaymentId   String?
+  providerPaymentId   String?         @unique
   status              PaymentStatus   @default(created)
   /// Amount in paise
   amount              Int
@@ -262,6 +265,29 @@ model Payment {
 
   @@index([providerOrderId])
   @@map("payments")
+}
+
+model WebhookEvent {
+  id          String          @id @default(cuid())
+  provider    PaymentProvider @default(razorpay)
+  eventId     String          @unique
+  eventType   String
+  processedAt DateTime        @default(now())
+  rawPayload  Json
+
+  @@index([provider, eventType])
+  @@map("webhook_events")
+}
+
+model RateLimitBucket {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  count     Int      @default(0)
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+  @@map("rate_limit_buckets")
 }
 
 /// Schema-only — routes and UI are v1.1 (not required at launch).

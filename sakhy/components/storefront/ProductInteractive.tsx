@@ -68,6 +68,7 @@ export default function ProductInteractive({ product }: ProductInteractiveProps)
       sku: selectedVariant.sku,
       color: selectedVariant.color,
       price: selectedVariant.price,
+      quantity,
       fabricType: product.fabricType,
       stockQty: availableStock,
       image: activeImages[0],

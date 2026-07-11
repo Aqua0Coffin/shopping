@@ -42,6 +42,8 @@ Motion language to reimplement as reusable components (not copy-pasted DOM): ent
 | Hosting | Vercel (app) + managed Postgres | Cost-efficient at 100 orders/month, scales without re-architecture. |
 | Monitoring | Vercel Analytics + Sentry | Catch checkout/payment errors early. |
 
+**Approved deviation:** rate limiting (checkout initiation, webhook receiver, admin login, newsletter) is implemented as a **durable Postgres-backed limiter** (a `rate_limit_buckets` table), not Upstash Redis as originally specified in Section 7. This was approved during Phase 3 — at 100 orders/month the overhead is negligible and it avoids adding a separate vendor. Do not "fix" this back to Redis without a reason; treat Postgres-backed rate limiting as the current spec.
+
 **Explicitly out of scope right now:** microservices, Kubernetes, a separate mobile app, custom CMS, multi-region infra, message queues. Keep the schema/API clean enough that a queue could be bolted on later, but don't build one now. If a task seems to require any of these, stop and flag it rather than adding it.
 
 ## 4. Information Architecture
@@ -82,6 +84,7 @@ Testimonial    id, customerName, quote, location, imageUrl, isPublished,
 - Payment status changes come only from **verified Razorpay webhook signatures** — never from the client-side redirect alone.
 - Every inventory change (manual or sale-driven) writes an `InventoryLog` row — this is a high-value-item audit trail the client will expect.
 - Prices at checkout are re-validated server-side against the current DB price, never trusted from client state.
+- All monetary values (`basePrice`, `ProductVariant.price`, `Order`/`OrderItem`/`Payment` amounts) are stored as **integer paise**, never `Decimal`/`Float` rupees — this matches Razorpay's own API, which expects amounts in paise, and avoids floating-point rounding errors on money. Convert to rupees only at the display layer.
 
 ## 6. Non-Functional Requirements
 
@@ -101,7 +104,7 @@ Treat every item below as a build requirement, same weight as the inventory/paym
 
 **DDoS / abuse**
 - Vercel's edge network absorbs generic volumetric traffic by default — this is not something to build yourself. Don't reinvent it.
-- Rate-limit the endpoints that are actually expensive or abusable: login, checkout/payment initiation, the Razorpay webhook receiver, and any public form (newsletter, contact). Use a lightweight edge-compatible limiter (e.g. Upstash Redis rate-limit) keyed by IP + route.
+- Rate-limit the endpoints that are actually expensive or abusable: login, checkout/payment initiation, the Razorpay webhook receiver, and any public form (newsletter, contact). Use a durable, request-surviving store keyed by IP + route — this project uses a Postgres-backed `rate_limit_buckets` table (see Section 3); an in-memory counter does not survive across serverless invocations and must never be used.
 - Lock out or exponentially back off repeated failed admin login attempts specifically — the admin panel is the highest-value target on this site.
 - If abuse becomes a real problem later, Cloudflare can sit in front of Vercel for additional bot/DDoS filtering — not required at launch, worth knowing as a lever.
 

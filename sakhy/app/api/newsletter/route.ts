@@ -1,35 +1,33 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  checkRateLimit,
+  getClientIp,
+  rateLimitHeaders,
+} from "@/lib/rate-limit";
 
 const newsletterSchema = z.object({
   email: z.string().email("Invalid email address"),
 });
 
-// Simple in-memory rate limiting map (IP -> timestamps[])
-const rateLimitMap = new Map<string, number[]>();
 const LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const MAX_REQUESTS = 5; // 5 requests per window
 
 export async function POST(req: Request) {
   try {
-    // Basic IP rate limiting
-    const ip = req.headers.get("x-forwarded-for") || "anonymous";
-    const now = Date.now();
-    const timestamps = rateLimitMap.get(ip) || [];
+    const ip = getClientIp(req);
+    const rateLimit = await checkRateLimit({
+      key: `newsletter:${ip}`,
+      limit: MAX_REQUESTS,
+      windowMs: LIMIT_WINDOW_MS,
+    });
 
-    // Filter out timestamps outside the limit window
-    const activeTimestamps = timestamps.filter((t) => now - t < LIMIT_WINDOW_MS);
-    
-    if (activeTimestamps.length >= MAX_REQUESTS) {
+    if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Too many subscription attempts. Please wait a minute." },
-        { status: 429 }
+        { status: 429, headers: rateLimitHeaders(rateLimit) }
       );
     }
-
-    // Add current timestamp and update map
-    activeTimestamps.push(now);
-    rateLimitMap.set(ip, activeTimestamps);
 
     const body = await req.json();
     const result = newsletterSchema.safeParse(body);

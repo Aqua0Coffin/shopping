@@ -135,17 +135,16 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* Stop boundary for Phase 2: Checkout is disabled */}
             <div className="mt-4 flex flex-col gap-3">
               <Button
-                variant="outline"
-                className="w-full !py-4 opacity-50 cursor-not-allowed hover:bg-transparent"
-                disabled
+                variant="primary"
+                href="/checkout"
+                className="w-full !py-4"
               >
                 Proceed to Checkout
               </Button>
               <span className="text-[10px] text-center text-crimson font-light tracking-wide block leading-relaxed px-2 bg-crimson/5 py-3.5 border border-crimson/15">
-                Checkout & UPI/Card Payment gateways will be enabled in Phase 3.
+                Prices and inventory are re-validated securely before payment.
               </span>
             </div>
             
