@@ -263,6 +263,39 @@ async function main() {
     console.log(`  ✓ Dev admin user created: ${adminEmail}`);
   }
 
+  // ── SEED TESTIMONIALS ────────────────────────────────────────────
+  const testimonialsData = [
+    {
+      customerName: "Priya Ramachandran",
+      quote: "My bridal Kanjivaram from Sakhy was everything I dreamed of. The weight, the lustre, the gold zari — it felt like wearing a piece of history on the most important day of my life.",
+      location: "Chennai, Tamil Nadu",
+      sortOrder: 1,
+    },
+    {
+      customerName: "Kavitha Iyer",
+      quote: "Three generations of women in my family have worn Sakhy sarees. The quality has never wavered — each piece tells a story of extraordinary skill and devotion.",
+      location: "Mumbai, Maharashtra",
+      sortOrder: 2,
+    },
+    {
+      customerName: "Ananya Desai",
+      quote: "The consultation was like stepping into another era. They understood my aesthetic perfectly and guided me to a Paithani that made my mother weep with joy at the wedding.",
+      location: "Pune, Maharashtra",
+      sortOrder: 3,
+    },
+  ];
+
+  for (const t of testimonialsData) {
+    // Check if testimonial already exists to maintain idempotency
+    const existing = await prisma.testimonial.findFirst({
+      where: { customerName: t.customerName },
+    });
+    if (!existing) {
+      await prisma.testimonial.create({ data: t });
+    }
+  }
+  console.log("  ✓ Seeded testimonials");
+
   console.log("\n✅ Seed complete!\n");
   console.log("Products seeded:");
   console.log("  • Bridal Red Zari      (Kanjivaram Silk)      ₹48,500");

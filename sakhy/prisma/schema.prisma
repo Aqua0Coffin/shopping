@@ -276,3 +276,19 @@ model Coupon {
 
   @@map("coupons")
 }
+
+/// Admin-editable social proof. Managed via /admin settings (Phase 4).
+/// Never hardcode testimonials in source — this table is the source of truth.
+model Testimonial {
+  id           String   @id @default(cuid())
+  customerName String
+  quote        String
+  location     String
+  imageUrl     String?
+  isPublished  Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([isPublished, sortOrder])
+  @@map("testimonials")
+}
