@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+/* ── SAKHY DESIGN TOKENS ───────────────────────────────────── */
+/* These mirror AGENTS.md Section 2 exactly. Do not add new     */
+/* colour/font variables without updating the spec first.       */
+
+@theme inline {
+  /* Colours */
+  --color-gold:         #C9A84C;
+  --color-gold-light:   #E8C97A;
+  --color-gold-pale:    #F5E6B8;
+  --color-deep:         #1A0A00;
+  --color-crimson:      #8B1A1A;
+  --color-ivory:        #FAF6EE;
+  --color-silk:         #F0E6D3;
+  --color-charcoal:     #2C2416;
+  --color-muted:        #8A7B6A;
+
+  /* Fonts — CSS vars set by next/font in layout.tsx */
+  --font-display: var(--font-cormorant), Georgia, serif;
+  --font-accent:  var(--font-playfair),  Georgia, serif;
+  --font-sans:    var(--font-raleway),   system-ui, sans-serif;
+
+  /* Custom animations */
+  --animate-marquee:        marquee-scroll 25s linear infinite;
+  --animate-marquee-rev:    marquee-scroll-rev 25s linear infinite;
+  --animate-glow-pulse:     glow-pulse 4s ease-in-out infinite;
+  --animate-heritage-drift: heritage-drift 20s linear infinite;
+  --animate-scroll-line:    scroll-line 1.8s ease-in-out infinite;
+  --animate-letter-rise:    letter-rise 0.6s ease forwards;
+  --animate-loader-out:     loader-out 0.8s ease forwards;
+  --animate-bar-fill:       bar-fill 1.8s ease forwards;
+  --animate-slide-up:       slide-up 0.8s ease forwards;
+  --animate-fade-in:        fade-in 0.5s ease forwards;
+}
+
+/* ── KEYFRAMES ─────────────────────────────────────────────── */
+@keyframes marquee-scroll     { to { transform: translateX(-50%); } }
+@keyframes marquee-scroll-rev { to { transform: translateX(50%);  } }
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1);   }
+  50%       { opacity: 1;   transform: scale(1.1); }
+}
+@keyframes heritage-drift {
+  from { transform: translateY(-50%) translateX(0);    }
+  to   { transform: translateY(-50%) translateX(-50%); }
+}
+@keyframes scroll-line {
+  0%   { transform: scaleY(0);   transform-origin: top;    }
+  50%  { transform: scaleY(1);   transform-origin: top;    }
+  51%  {                          transform-origin: bottom; }
+  100% { transform: scaleY(0);   transform-origin: bottom; }
+}
+@keyframes letter-rise { to { opacity: 1; transform: translateY(0); } }
+@keyframes loader-out  { to { opacity: 0; pointer-events: none; transform: translateY(-20px); } }
+@keyframes bar-fill    { to { transform: translateX(0); } }
+@keyframes slide-up    { to { opacity: 1; transform: translateY(0); } }
+@keyframes fade-in     { to { opacity: 1; } }
+
+/* ── GLOBAL RESET & BASE ────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-ivory);
+  color: var(--color-deep);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  overflow-x: hidden;
+  /* Custom cursor active on fine-pointer (desktop) only */
+  cursor: default;
+}
+
+/* Hide default cursor on desktop when custom cursor is active */
+@media (pointer: fine) {
+  body.custom-cursor-active {
+    cursor: none;
+  }
+  body.custom-cursor-active a,
+  body.custom-cursor-active button {
+    cursor: none;
+  }
+}
+
+/* ── TEXT SELECTION ─────────────────────────────────────────── */
+::selection {
+  background-color: var(--color-gold);
+  color: var(--color-deep);
+}
+
+/* ── SCROLLBAR (desktop) ────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-ivory); }
+::-webkit-scrollbar-thumb { background: var(--color-gold); border-radius: 3px; }
+
+/* ── FOCUS VISIBLE ──────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+}
+
+/* ── ACCESSIBILITY: respect reduced motion preference ─────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
