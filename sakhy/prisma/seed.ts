@@ -9,6 +9,7 @@
 
 import { PrismaClient, ProductStatus, InventoryChangeReason } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { hash } from "bcryptjs";
 import { Pool } from "pg";
 import "dotenv/config";
 
@@ -246,21 +247,26 @@ async function main() {
   }
 
   // ── SEED ADMIN USER (local dev only) ─────────────────────────────
-  // NOTE: Password hashing should use bcrypt in real auth flow.
-  // This seed creates a dev-only admin account with a placeholder hash.
-  // Change credentials and re-seed before connecting to production.
+  // Dev admin credentials are seeded with bcrypt so NextAuth credentials login works.
+  // Email: admin@sakhy.local | Password: Admin@1234
   const adminEmail = "admin@sakhy.local";
+  const adminPasswordHash = await hash("Admin@1234", 12);
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
   if (!existingAdmin) {
     await prisma.user.create({
       data: {
         email: adminEmail,
-        // This is NOT a real password hash — for local dev only
-        passwordHash: "CHANGE_ME_BEFORE_PROD",
+        passwordHash: adminPasswordHash,
         role: "admin",
       },
     });
-    console.log(`  ✓ Dev admin user created: ${adminEmail}`);
+    console.log(`  ✓ Dev admin user created: ${adminEmail} (password: Admin@1234)`);
+  } else if (!existingAdmin.passwordHash || existingAdmin.passwordHash === "CHANGE_ME_BEFORE_PROD") {
+    await prisma.user.update({
+      where: { id: existingAdmin.id },
+      data: { passwordHash: adminPasswordHash, role: "admin" },
+    });
+    console.log(`  ✓ Dev admin credentials refreshed: ${adminEmail} (password: Admin@1234)`);
   }
 
   // ── SEED TESTIMONIALS ────────────────────────────────────────────
