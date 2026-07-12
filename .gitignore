@@ -41,3 +41,7 @@ next-env.d.ts
 # Generated artifacts
 **/app/generated/prisma/
 
+# graphify knowledge graph outputs
+graphify-out/
+**/graphify-out/
+

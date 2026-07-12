@@ -407,99 +407,52 @@ export async function processRazorpayWebhook(
   }
 
   const eventId = getWebhookEventId(payload, paymentEntity, providerEventId);
-  const existingEvent = await prisma.webhookEvent.findUnique({
-    where: { eventId },
-    select: { id: true },
-  });
+  return prisma.$transaction(
+    async (tx) => {
+      const eventRowId = crypto.randomUUID();
+      const insertedEvent = await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        INSERT INTO "webhook_events" ("id", "provider", "eventId", "eventType", "rawPayload")
+        VALUES (${eventRowId}, 'razorpay'::"PaymentProvider", ${eventId}, ${eventType}, ${JSON.stringify(payload)}::jsonb)
+        ON CONFLICT ("eventId") DO NOTHING
+        RETURNING "id"
+      `);
 
-  if (existingEvent) {
-    return { processed: false, reason: "duplicate_event" };
-  }
+      if (insertedEvent.length === 0) {
+        return { processed: false, reason: "duplicate_event" };
+      }
 
-  try {
-    return await prisma.$transaction(
-      async (tx) => {
-        await tx.webhookEvent.create({
-          data: {
-            eventId,
-            eventType,
-            rawPayload: payload as Prisma.InputJsonValue,
-          },
-        });
-
-        const payment = await tx.payment.findUnique({
-          where: { providerOrderId: paymentEntity.order_id },
-          include: {
-            order: {
-              include: {
-                items: true,
-              },
+      const payment = await tx.payment.findUnique({
+        where: { providerOrderId: paymentEntity.order_id },
+        include: {
+          order: {
+            include: {
+              items: true,
             },
           },
-        });
+        },
+      });
 
-        if (!payment) {
-          throw new CheckoutError("No local payment matches this Razorpay order.", 404, "PAYMENT_NOT_FOUND");
-        }
+      if (!payment) {
+        throw new CheckoutError("No local payment matches this Razorpay order.", 404, "PAYMENT_NOT_FOUND");
+      }
 
-        if (payment.amount !== paymentEntity.amount) {
-          throw new CheckoutError("Webhook amount does not match local order amount.", 400, "AMOUNT_MISMATCH");
-        }
+      if (payment.amount !== paymentEntity.amount) {
+        throw new CheckoutError("Webhook amount does not match local order amount.", 400, "AMOUNT_MISMATCH");
+      }
 
-        if (
-          payment.status === PaymentStatus.captured ||
-          payment.order.status === OrderStatus.paid
-        ) {
-          return { processed: false, reason: "already_captured" };
-        }
+      if (
+        payment.status === PaymentStatus.captured ||
+        payment.order.status === OrderStatus.paid
+      ) {
+        return { processed: false, reason: "already_captured" };
+      }
 
-        if (eventType === "payment.failed") {
-          await releaseReservedItemsInTransaction(tx, payment.order.id);
-          await tx.payment.update({
-            where: { id: payment.id },
-            data: {
-              status: PaymentStatus.failed,
-              providerPaymentId: paymentEntity.id,
-              signatureVerified: true,
-              rawPayload: payload as Prisma.InputJsonValue,
-            },
-          });
-
-          await tx.order.update({
-            where: { id: payment.order.id },
-            data: {
-              status: OrderStatus.cancelled,
-              reservationReleasedAt: new Date(),
-            },
-          });
-
-          return { processed: true, reason: "payment_failed" };
-        }
-
-        if (eventType === "payment.authorized") {
-          await tx.payment.update({
-            where: { id: payment.id },
-            data: {
-              status: PaymentStatus.authorized,
-              providerPaymentId: paymentEntity.id,
-              signatureVerified: true,
-              rawPayload: payload as Prisma.InputJsonValue,
-            },
-          });
-
-          return { processed: true, reason: "payment_authorized" };
-        }
-
-        if (eventType !== "payment.captured") {
-          return { processed: false, reason: "ignored_event" };
-        }
-
-        await capturePaidOrderInTransaction(tx, payment.order.id);
-
+      if (eventType === "payment.failed") {
+        await releaseReservedItemsInTransaction(tx, payment.order.id);
         await tx.payment.update({
           where: { id: payment.id },
           data: {
-            status: PaymentStatus.captured,
+            status: PaymentStatus.failed,
             providerPaymentId: paymentEntity.id,
             signatureVerified: true,
             rawPayload: payload as Prisma.InputJsonValue,
@@ -509,25 +462,56 @@ export async function processRazorpayWebhook(
         await tx.order.update({
           where: { id: payment.order.id },
           data: {
-            status: OrderStatus.paid,
+            status: OrderStatus.cancelled,
             reservationReleasedAt: new Date(),
           },
         });
 
-        return { processed: true, reason: "payment_captured" };
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
-    );
-  } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      return { processed: false, reason: "duplicate_event" };
-    }
+        return { processed: true, reason: "payment_failed" };
+      }
 
-    throw error;
-  }
+      if (eventType === "payment.authorized") {
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: PaymentStatus.authorized,
+            providerPaymentId: paymentEntity.id,
+            signatureVerified: true,
+            rawPayload: payload as Prisma.InputJsonValue,
+          },
+        });
+
+        return { processed: true, reason: "payment_authorized" };
+      }
+
+      if (eventType !== "payment.captured") {
+        return { processed: false, reason: "ignored_event" };
+      }
+
+      await capturePaidOrderInTransaction(tx, payment.order.id);
+
+      await tx.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: PaymentStatus.captured,
+          providerPaymentId: paymentEntity.id,
+          signatureVerified: true,
+          rawPayload: payload as Prisma.InputJsonValue,
+        },
+      });
+
+      await tx.order.update({
+        where: { id: payment.order.id },
+        data: {
+          status: OrderStatus.paid,
+          reservationReleasedAt: new Date(),
+        },
+      });
+
+      return { processed: true, reason: "payment_captured" };
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+  );
 }
 
 async function releaseReservedItemsInTransaction(
