@@ -8,15 +8,11 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
+    seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    // Local dev: Docker Postgres
-    // Staging/prod: Supabase connection pooler (Transaction mode, port 6543)
-    //   for prisma generate + runtime queries
-    url: process.env["DATABASE_URL"]!,
-
-    // Supabase only: Direct connection for migrations (bypasses PgBouncer)
-    // Uncomment when deploying to Supabase:
-    // directUrl: process.env["DIRECT_URL"],
+    // Prisma CLI (migrate, db pull, etc.) reads datasource.url from this config in Prisma 7.
+    // Use the direct connection here; runtime Prisma client continues using DATABASE_URL in lib/prisma.ts.
+    url: process.env["DIRECT_URL"]!,
   },
 });

@@ -44,6 +44,8 @@ Motion language to reimplement as reusable components (not copy-pasted DOM): ent
 
 **Approved deviation:** rate limiting (checkout initiation, webhook receiver, admin login, newsletter) is implemented as a **durable Postgres-backed limiter** (a `rate_limit_buckets` table), not Upstash Redis as originally specified in Section 7. This was approved during Phase 3 — at 100 orders/month the overhead is negligible and it avoids adding a separate vendor. Do not "fix" this back to Redis without a reason; treat Postgres-backed rate limiting as the current spec.
 
+**Prisma 7 + Supabase connection config (do not "fix" this either):** Prisma ORM v7 removed `directUrl` from `schema.prisma`'s datasource block. CLI commands (migrate, studio) read `datasource.url` in `prisma.config.ts`, which must point to `DIRECT_URL` (Supabase pooler, session mode, port 5432) — not `DATABASE_URL` (transaction mode, port 6543, `pgbouncer=true`), which the CLI cannot run migrations through. The running app's Prisma Client (`lib/prisma.ts`) uses `DATABASE_URL` via `@prisma/adapter-pg` separately and correctly stays on the pooled connection. These are two independent configs in v7, not one datasource block with two URL fields.
+
 **Explicitly out of scope right now:** microservices, Kubernetes, a separate mobile app, custom CMS, multi-region infra, message queues. Keep the schema/API clean enough that a queue could be bolted on later, but don't build one now. If a task seems to require any of these, stop and flag it rather than adding it.
 
 ## 4. Information Architecture
