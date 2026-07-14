@@ -57,6 +57,60 @@ function getIpFromAuthorizeRequest(req: unknown): string {
   );
 }
 
+export async function verifyCredentials(
+  credentials: { email: string; password: string },
+  ip: string
+): Promise<{ id: string; email: string; role: Role } | null> {
+  const parsed = credentialsSchema.safeParse(credentials);
+  if (!parsed.success) return null;
+
+  const email = parsed.data.email.toLowerCase();
+  const adminRateLimitKey = `auth:admin-login-fail:${ip}`;
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, email: true, role: true, passwordHash: true },
+  });
+
+  const isAdminRole = user?.role === "admin" || user?.role === "staff";
+
+  if (isAdminRole) {
+    const lockout = await peekRateLimit({
+      key: adminRateLimitKey,
+      limit: ADMIN_LOGIN_FAIL_LIMIT,
+      windowMs: ADMIN_LOGIN_FAIL_WINDOW_MS,
+    });
+    if (!lockout.allowed) return null;
+  }
+
+  if (!user?.passwordHash) {
+    if (isAdminRole) {
+      await incrementRateLimit({
+        key: adminRateLimitKey,
+        limit: ADMIN_LOGIN_FAIL_LIMIT,
+        windowMs: ADMIN_LOGIN_FAIL_WINDOW_MS,
+      });
+    }
+    return null;
+  }
+
+  const validPassword = await compare(parsed.data.password, user.passwordHash);
+  if (!validPassword) {
+    if (isAdminRole) {
+      await incrementRateLimit({
+        key: adminRateLimitKey,
+        limit: ADMIN_LOGIN_FAIL_LIMIT,
+        windowMs: ADMIN_LOGIN_FAIL_WINDOW_MS,
+      });
+    }
+    return null;
+  }
+
+  if (isAdminRole) await clearRateLimitKey(adminRateLimitKey);
+
+  return { id: user.id, email: user.email, role: user.role };
+}
+
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",

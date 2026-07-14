@@ -14,6 +14,35 @@ const updateProductSchema = z.object({
   basePrice: z.number().int().min(1).optional(),
 });
 
+export async function GET(
+  _req: Request,
+  context: { params: Promise<{ productId: string }> }
+) {
+  const { error } = await requireAdminApiSession();
+  if (error) return error;
+
+  const { productId } = await context.params;
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: {
+      category: { select: { id: true, name: true } },
+      variants: {
+        include: {
+          inventory: true,
+        },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+
+  if (!product) {
+    return NextResponse.json({ error: "Product not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ product });
+}
+
 export async function PATCH(
   req: Request,
   context: { params: Promise<{ productId: string }> }

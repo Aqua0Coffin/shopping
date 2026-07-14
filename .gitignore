@@ -9,6 +9,8 @@
 *.p12
 *.pfx
 
+graphify-out/
+
 # Dependencies and package manager caches
 node_modules/
 **/node_modules/

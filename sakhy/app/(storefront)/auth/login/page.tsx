@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { signIn } from "next-auth/react";
 import Button from "@/components/ui/Button";
 
 export default function LoginPage() {
@@ -21,22 +20,22 @@ export default function LoginPage() {
     setPending(true);
     setError("");
 
-    const result = await signIn("credentials", {
-      redirect: false,
-      email,
-      password,
-      callbackUrl,
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
+    const data = await res.json() as { ok?: boolean; error?: string };
 
     setPending(false);
 
-    if (!result || result.error) {
-      setError("Invalid email or password.");
+    if (!res.ok || !data.ok) {
+      setError(data.error || "Invalid email or password.");
       return;
     }
 
-    router.push(result.url || callbackUrl);
     router.refresh();
+    router.push(callbackUrl);
   };
 
   return (

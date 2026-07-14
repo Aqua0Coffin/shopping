@@ -50,75 +50,6 @@ export async function checkRateLimit({
       };
     }
 
-    export async function peekRateLimit({
-      key,
-      limit,
-      windowMs,
-    }: RateLimitOptions): Promise<RateLimitResult> {
-      const now = new Date();
-      const resetAt = new Date(now.getTime() + windowMs);
-
-      const bucket = await prisma.rateLimitBucket.findUnique({ where: { key } });
-
-      if (!bucket || bucket.resetAt <= now) {
-        return {
-          allowed: true,
-          remaining: limit,
-          resetAt,
-        };
-      }
-
-      return {
-        allowed: bucket.count < limit,
-        remaining: Math.max(0, limit - bucket.count),
-        resetAt: bucket.resetAt,
-      };
-    }
-
-    export async function incrementRateLimit({
-      key,
-      limit,
-      windowMs,
-    }: RateLimitOptions): Promise<RateLimitResult> {
-      const now = new Date();
-      const resetAt = new Date(now.getTime() + windowMs);
-
-      return prisma.$transaction(async (tx) => {
-        const bucket = await tx.rateLimitBucket.findUnique({ where: { key } });
-
-        if (!bucket || bucket.resetAt <= now) {
-          const freshBucket = await tx.rateLimitBucket.upsert({
-            where: { key },
-            update: { count: 1, resetAt },
-            create: { key, count: 1, resetAt },
-          });
-
-          return {
-            allowed: freshBucket.count < limit,
-            remaining: Math.max(0, limit - freshBucket.count),
-            resetAt: freshBucket.resetAt,
-          };
-        }
-
-        const updatedBucket = await tx.rateLimitBucket.update({
-          where: { key },
-          data: { count: { increment: 1 } },
-        });
-
-        return {
-          allowed: updatedBucket.count < limit,
-          remaining: Math.max(0, limit - updatedBucket.count),
-          resetAt: updatedBucket.resetAt,
-        };
-      });
-    }
-
-    export async function clearRateLimitKey(key: string) {
-      await prisma.rateLimitBucket.deleteMany({
-        where: { key },
-      });
-    }
-
     if (bucket.count >= limit) {
       return {
         allowed: false,
@@ -137,6 +68,75 @@ export async function checkRateLimit({
       remaining: Math.max(0, limit - updatedBucket.count),
       resetAt: updatedBucket.resetAt,
     };
+  });
+}
+
+export async function peekRateLimit({
+  key,
+  limit,
+  windowMs,
+}: RateLimitOptions): Promise<RateLimitResult> {
+  const now = new Date();
+  const resetAt = new Date(now.getTime() + windowMs);
+
+  const bucket = await prisma.rateLimitBucket.findUnique({ where: { key } });
+
+  if (!bucket || bucket.resetAt <= now) {
+    return {
+      allowed: true,
+      remaining: limit,
+      resetAt,
+    };
+  }
+
+  return {
+    allowed: bucket.count < limit,
+    remaining: Math.max(0, limit - bucket.count),
+    resetAt: bucket.resetAt,
+  };
+}
+
+export async function incrementRateLimit({
+  key,
+  limit,
+  windowMs,
+}: RateLimitOptions): Promise<RateLimitResult> {
+  const now = new Date();
+  const resetAt = new Date(now.getTime() + windowMs);
+
+  return prisma.$transaction(async (tx) => {
+    const bucket = await tx.rateLimitBucket.findUnique({ where: { key } });
+
+    if (!bucket || bucket.resetAt <= now) {
+      const freshBucket = await tx.rateLimitBucket.upsert({
+        where: { key },
+        update: { count: 1, resetAt },
+        create: { key, count: 1, resetAt },
+      });
+
+      return {
+        allowed: freshBucket.count < limit,
+        remaining: Math.max(0, limit - freshBucket.count),
+        resetAt: freshBucket.resetAt,
+      };
+    }
+
+    const updatedBucket = await tx.rateLimitBucket.update({
+      where: { key },
+      data: { count: { increment: 1 } },
+    });
+
+    return {
+      allowed: updatedBucket.count < limit,
+      remaining: Math.max(0, limit - updatedBucket.count),
+      resetAt: updatedBucket.resetAt,
+    };
+  });
+}
+
+export async function clearRateLimitKey(key: string) {
+  await prisma.rateLimitBucket.deleteMany({
+    where: { key },
   });
 }
 
