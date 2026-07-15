@@ -10,6 +10,7 @@
 *.pfx
 
 graphify-out/
+.agents/skills/graphify/
 
 # Dependencies and package manager caches
 node_modules/
