@@ -212,6 +212,7 @@ model Order {
   tax       Int         @default(0)
   total     Int
   addressId String
+  trackingNumber String?
   reservationExpiresAt DateTime?
   reservationReleasedAt DateTime?
   createdAt DateTime    @default(now())
@@ -224,6 +225,7 @@ model Order {
 
   @@index([userId])
   @@index([status])
+  @@index([trackingNumber])
   @@index([reservationExpiresAt])
   @@map("orders")
 }

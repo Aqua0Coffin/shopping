@@ -6,8 +6,12 @@ import { requireAdminApiSession } from "@/lib/admin-api";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 
 const statusSchema = z.object({
-  status: z.nativeEnum(OrderStatus),
-});
+  status: z.nativeEnum(OrderStatus).optional(),
+  trackingNumber: z.string().trim().max(120).optional(),
+}).refine(
+  (data) => data.status !== undefined || data.trackingNumber !== undefined,
+  { message: "Provide at least one of: status, trackingNumber." }
+);
 
 export async function PATCH(
   req: Request,
@@ -21,10 +25,13 @@ export async function PATCH(
   const parsed = statusSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid status format." }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message || "Invalid payload." },
+      { status: 400 }
+    );
   }
 
-  const { status: newStatus } = parsed.data;
+  const { status: newStatus, trackingNumber } = parsed.data;
 
   try {
     const order = await prisma.order.findUnique({
@@ -36,66 +43,72 @@ export async function PATCH(
       return NextResponse.json({ error: "Order not found." }, { status: 404 });
     }
 
-    if (order.status === newStatus) {
-      return NextResponse.json({ order });
+    // Build update payload
+    const updateData: Record<string, unknown> = {};
+
+    if (trackingNumber !== undefined) {
+      updateData.trackingNumber = trackingNumber || null;
     }
 
-    // 1. Razorpay Automatic Refund Handling
-    if (newStatus === "refunded") {
-      const payment = order.payment;
-      // We only attempt an automated refund if the transaction was formally captured locally.
-      if (payment && payment.status === "captured" && payment.providerPaymentId) {
-        if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-          return NextResponse.json(
-            { error: "Razorpay server keys not configured for refunds." },
-            { status: 500 }
-          );
-        }
+    if (newStatus) {
+      // No-op if status unchanged
+      if (order.status === newStatus && trackingNumber === undefined) {
+        return NextResponse.json({ order });
+      }
 
-        const rzp = new Razorpay({
-          key_id: process.env.RAZORPAY_KEY_ID,
-          key_secret: process.env.RAZORPAY_KEY_SECRET,
-        });
+      // ── Razorpay Automated Refund ──
+      if (newStatus === "refunded") {
+        const payment = order.payment;
+        if (payment && payment.status === "captured" && payment.providerPaymentId) {
+          if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+            return NextResponse.json(
+              { error: "Razorpay server keys not configured for refunds." },
+              { status: 500 }
+            );
+          }
 
-        try {
-          // Fire API request to Razorpay to actually reverse the funds back to customer
-          const refundResult = await rzp.payments.refund(payment.providerPaymentId, {
-            amount: payment.amount, // Full refund in paise
-            notes: {
-              localOrderId: orderId,
-              reason: "Admin forced full refund from UI",
-            },
+          const rzp = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET,
           });
 
-          // Also update the Payment record alongside the Order record
-          await prisma.payment.update({
-            where: { id: payment.id },
-            data: { 
-              status: PaymentStatus.refunded,
-              // Dump refund object into rawPayload or an updated schema field
-              rawPayload: refundResult as unknown as any
-            },
-          });
+          try {
+            const refundResult = await rzp.payments.refund(payment.providerPaymentId, {
+              amount: payment.amount,
+              notes: {
+                localOrderId: orderId,
+                reason: "Admin forced full refund from UI",
+              },
+            });
 
-        } catch (rzpError: any) {
-          console.error("Razorpay Refund Error", rzpError);
-          return NextResponse.json(
-            { error: rzpError?.error?.description || "Razorpay API rejected the refund." },
-            { status: 400 }
-          );
+            await prisma.payment.update({
+              where: { id: payment.id },
+              data: {
+                status: PaymentStatus.refunded,
+                rawPayload: refundResult as unknown as any,
+              },
+            });
+          } catch (rzpError: any) {
+            console.error("Razorpay Refund Error", rzpError);
+            return NextResponse.json(
+              { error: rzpError?.error?.description || "Razorpay API rejected the refund." },
+              { status: 400 }
+            );
+          }
         }
       }
+
+      updateData.status = newStatus;
     }
 
-    // 2. Standard Order Status Update
     const updated = await prisma.order.update({
       where: { id: orderId },
-      data: { status: newStatus },
+      data: updateData,
     });
 
     return NextResponse.json({ order: updated });
   } catch (err) {
     console.error("[orders/status] Error:", err);
-    return NextResponse.json({ error: "Failed to update order status." }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update order." }, { status: 500 });
   }
 }
