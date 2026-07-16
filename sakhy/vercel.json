@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/checkout/release-expired",
-      "schedule": "*/5 * * * *"
-    }
-  ]
-}
