@@ -12,7 +12,10 @@ interface PageProps {
 // Pre-render known product pages at build time
 export async function generateStaticParams() {
   const products = await prisma.product.findMany({
-    where: { status: "published" },
+    where: {
+      status: "published",
+      variants: { some: {} },
+    },
     select: { slug: true },
   });
   return products.map((p) => ({ slug: p.slug }));
@@ -25,10 +28,8 @@ export async function generateMetadata({ params }: PageProps) {
     where: { slug },
   });
 
-  if (!product) {
-    return {
-      title: "Product Not Found — Sakhy",
-    };
+  if (!product || product.status !== "published") {
+    notFound();
   }
 
   return {
