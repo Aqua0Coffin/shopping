@@ -121,7 +121,9 @@ Treat every item below as a build requirement, same weight as the inventory/paym
 - Webhook handlers are idempotent — a retried webhook must not double-fulfill an order or double-decrement stock.
 
 **Input & file handling**
-- Validate every admin image upload for file type and size server-side (not just client-side) before it reaches storage; never trust the client-reported MIME type alone.
+- Validate every admin image upload for file type and size server-side (not just client-side) before it reaches storage; never trust the client-reported MIME type alone — check magic bytes.
+- Generate the stored filename server-side (e.g. a UUID + the extension derived from the detected file type), never from the client-supplied original filename — prevents path traversal and filename-collision overwrites.
+- Enforce the max upload size against the actual bytes read from the stream, not just the `Content-Length` header — the header can be absent or spoofed.
 - Sanitize any user-generated text (reviews, contact form messages, if added later) before storage or render, to prevent stored XSS.
 
 **Transport & headers**
@@ -136,7 +138,12 @@ Treat every item below as a build requirement, same weight as the inventory/paym
 **Monitoring**
 - Sentry (already in the stack per Section 3) should be configured to flag repeated auth failures and payment-verification failures, not just unhandled exceptions — these are the signals that show an attack is happening, not just a bug.
 
-## 8. How to Use This Skill in a Task
+## 8. Pre-Launch Checklist (deferred items — do not treat as done until closed)
+
+- **Razorpay integration is not yet wired up.** Payment/checkout logic, stock reservation, and webhook idempotency were built and tested against a mocked Razorpay client (see the Phase 3 concurrency test), not a real account. Test-mode API keys need to be generated and added to the environment before checkout, webhooks, or refunds can be genuinely verified — see Section 3 for the intended provider. This must be done, in test mode at minimum, before Phase 4c's refund flow can be considered verified, and switched to live-mode keys (requires KYC) only immediately before public launch.
+- Track any other phase/feature marked "code-complete but unverified due to a blocker" here as it comes up, so deferred verification isn't lost by the time launch approaches.
+
+## 9. How to Use This Skill in a Task
 
 1. Before generating any code, confirm the task against Sections 3 (stack) and 5 (schema) — don't introduce a new library, database, or model shape without checking here first.
 2. For any UI work, pull colors/type/motion from Section 2 rather than picking new ones.
