@@ -3,12 +3,11 @@ import { z } from "zod";
 import Razorpay from "razorpay";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApiSession } from "@/lib/admin-api";
-import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { OrderStatus, PaymentStatus, Prisma } from "@prisma/client";
 
 const refundSchema = z.object({
-  amount: z.number().int().min(1).optional(),
   reason: z.string().trim().max(500).optional(),
-});
+}).strict();
 
 export async function POST(
   req: Request,
@@ -18,8 +17,12 @@ export async function POST(
   if (error) return error;
 
   const { id: orderId } = await params;
-
-  const body = await req.json();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
+  }
   const parsed = refundSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -29,7 +32,7 @@ export async function POST(
     );
   }
 
-  const { amount, reason } = parsed.data;
+  const { reason } = parsed.data;
 
   try {
     const order = await prisma.order.findUnique({
@@ -41,9 +44,9 @@ export async function POST(
       return NextResponse.json({ error: "Order not found." }, { status: 404 });
     }
 
-    if (order.status !== "paid" && order.status !== "processing" && order.status !== "shipped") {
+    if (!(["paid", "processing", "shipped", "delivered"] as OrderStatus[]).includes(order.status)) {
       return NextResponse.json(
-        { error: `Cannot refund an order with status "${order.status}". Only paid/processing/shipped orders can be refunded.` },
+        { error: `Cannot refund an order with status "${order.status}". Only paid, processing, shipped, or delivered orders can be refunded.` },
         { status: 400 }
       );
     }
@@ -56,9 +59,16 @@ export async function POST(
       );
     }
 
-    if (payment.status === "refunded") {
+    if (payment.status === PaymentStatus.refunded) {
       return NextResponse.json(
         { error: "This order has already been fully refunded." },
+        { status: 400 }
+      );
+    }
+
+    if (payment.status !== PaymentStatus.captured || !payment.signatureVerified) {
+      return NextResponse.json(
+        { error: "Only a verified, captured Razorpay payment can be refunded." },
         { status: 400 }
       );
     }
@@ -75,9 +85,15 @@ export async function POST(
       key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
 
-    const refundAmount = amount || payment.amount;
+    const refundAmount = payment.amount;
 
-    let refundResult;
+    let refundResult: {
+      id?: string;
+      entity?: string;
+      status?: string;
+      amount?: number;
+      payment_id?: string;
+    };
     try {
       refundResult = await rzp.payments.refund(payment.providerPaymentId, {
         amount: refundAmount,
@@ -86,10 +102,11 @@ export async function POST(
           reason: reason || "Admin-initiated refund from dashboard",
         },
       });
-    } catch (rzpError: any) {
+    } catch (rzpError: unknown) {
       console.error("Razorpay Refund API Error:", rzpError);
+      const apiError = rzpError as { error?: { description?: string } };
       return NextResponse.json(
-        { error: rzpError?.error?.description || "Razorpay refund API rejected the request." },
+        { error: apiError.error?.description || "Razorpay refund API rejected the request." },
         { status: 400 }
       );
     }
@@ -100,7 +117,7 @@ export async function POST(
         where: { id: payment.id },
         data: {
           status: PaymentStatus.refunded,
-          rawPayload: refundResult as unknown as any,
+          rawPayload: refundResult as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -112,7 +129,13 @@ export async function POST(
 
     return NextResponse.json({
       ok: true,
-      refund: refundResult,
+      refund: {
+        id: refundResult.id,
+        entity: refundResult.entity,
+        status: refundResult.status,
+        amount: refundResult.amount,
+        paymentId: refundResult.payment_id,
+      },
       orderId,
       message: `Refund of ₹${(refundAmount / 100).toLocaleString("en-IN")} processed successfully.`,
     });

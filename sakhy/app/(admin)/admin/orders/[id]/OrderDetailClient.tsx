@@ -51,7 +51,7 @@ export default function OrderDetailClient({
           setStatusMsg("Order updated successfully.");
           router.refresh();
         }
-      } catch (err) {
+      } catch {
         setStatusError("Network error. Please try again.");
       } finally {
         setLoadingStatus(false);
@@ -94,7 +94,7 @@ export default function OrderDetailClient({
         setRefundMsg(json.message || "Refund processed successfully.");
         router.refresh();
       }
-    } catch (err) {
+    } catch {
       setRefundError("Network error during refund.");
     } finally {
       setRefunding(false);

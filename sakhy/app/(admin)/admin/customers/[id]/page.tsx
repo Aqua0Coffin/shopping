@@ -192,12 +192,12 @@ export default async function AdminCustomerDetailPage({ params }: PageProps) {
       </div>
 
       {/* Back link */}
-      <a
+      <Link
         href="/admin/customers"
         className="inline-block text-[10px] uppercase tracking-widest text-gold hover:text-gold-light transition-colors"
       >
         &larr; Back to Customers
-      </a>
+      </Link>
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApiSession } from "@/lib/admin-api";
 
@@ -26,7 +27,7 @@ export async function GET(req: Request) {
 
   const { search, sort, page, limit } = parsed.data;
 
-  const where: Record<string, unknown> = { role: "customer" };
+  const where: Prisma.UserWhereInput = { role: "customer" };
 
   if (search) {
     where.OR = [
@@ -35,7 +36,7 @@ export async function GET(req: Request) {
     ];
   }
 
-  const orderBy: Record<string, string>[] =
+  const orderBy: Prisma.UserOrderByWithRelationInput[] =
     sort === "newest"
       ? [{ createdAt: "desc" }]
       : sort === "oldest"
@@ -44,7 +45,7 @@ export async function GET(req: Request) {
 
   const [customers, total] = await Promise.all([
     prisma.user.findMany({
-      where: where as any,
+      where,
       orderBy,
       skip: (page - 1) * limit,
       take: limit,
@@ -58,7 +59,7 @@ export async function GET(req: Request) {
         },
       },
     }),
-    prisma.user.count({ where: where as any }),
+    prisma.user.count({ where }),
   ]);
 
   // Enrich with order totals

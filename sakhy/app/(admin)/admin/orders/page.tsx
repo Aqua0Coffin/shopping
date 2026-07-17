@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/format";
 import { getAuthSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, Prisma } from "@prisma/client";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-amber-400/20 text-amber-600 border-amber-400/30",
@@ -20,7 +20,16 @@ interface PageProps {
     status?: string;
     search?: string;
     sort?: string;
+    startDate?: string;
+    endDate?: string;
   }>;
+}
+
+function parseDateFilter(value: string | undefined, endOfDay = false) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+
+  const date = new Date(`${value}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}Z`);
+  return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
 export default async function AdminOrdersPage({ searchParams }: PageProps) {
@@ -33,11 +42,13 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
   const statusFilter = sp.status || "";
   const searchQuery = sp.search || "";
   const sortOrder = sp.sort || "newest";
+  const startDate = sp.startDate || "";
+  const endDate = sp.endDate || "";
 
-  const where: Record<string, unknown> = {};
+  const where: Prisma.OrderWhereInput = {};
 
   if (statusFilter && Object.values(OrderStatus).includes(statusFilter as OrderStatus)) {
-    where.status = statusFilter;
+    where.status = statusFilter as OrderStatus;
   }
 
   if (searchQuery) {
@@ -47,8 +58,36 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
     ];
   }
 
+  const startDateFilter = parseDateFilter(startDate);
+  const endDateFilter = parseDateFilter(endDate, true);
+  if (startDateFilter || endDateFilter) {
+    where.createdAt = {
+      ...(startDateFilter ? { gte: startDateFilter } : {}),
+      ...(endDateFilter ? { lte: endDateFilter } : {}),
+    };
+  }
+
+  const orderQuery = (overrides: Record<string, string | undefined>) => {
+    const params = new URLSearchParams();
+    const values = {
+      status: statusFilter || undefined,
+      search: searchQuery || undefined,
+      sort: sortOrder || undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      ...overrides,
+    };
+
+    for (const [key, value] of Object.entries(values)) {
+      if (value) params.set(key, value);
+    }
+
+    const query = params.toString();
+    return query ? `/admin/orders?${query}` : "/admin/orders";
+  };
+
   const orders = await prisma.order.findMany({
-    where: where as any,
+    where,
     orderBy: { createdAt: sortOrder === "oldest" ? "asc" : "desc" },
     take: 100,
     include: {
@@ -69,7 +108,7 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
       <div className="flex flex-wrap items-center gap-3 text-xs">
         <span className="text-muted tracking-wider uppercase">Filter:</span>
         <Link
-          href="/admin/orders"
+          href={orderQuery({ status: undefined })}
           className={`px-3 py-1.5 border tracking-wider uppercase transition-colors ${
             !statusFilter
               ? "border-gold text-gold bg-gold/5"
@@ -81,7 +120,7 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
         {statuses.map((s) => (
           <Link
             key={s}
-            href={`/admin/orders?status=${s}${searchQuery ? `&search=${searchQuery}` : ""}`}
+            href={orderQuery({ status: s })}
             className={`px-3 py-1.5 border tracking-wider uppercase transition-colors ${
               statusFilter === s
                 ? "border-gold text-gold bg-gold/5"
@@ -94,7 +133,7 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
 
         <span className="ml-4 text-muted tracking-wider uppercase">Sort:</span>
         <Link
-          href={`/admin/orders?${new URLSearchParams({ ...(statusFilter ? { status: statusFilter } : {}), ...(searchQuery ? { search: searchQuery } : {}), sort: "newest" }).toString()}`}
+          href={orderQuery({ sort: "newest" })}
           className={`px-3 py-1.5 border tracking-wider uppercase transition-colors ${
             sortOrder === "newest"
               ? "border-gold text-gold bg-gold/5"
@@ -104,7 +143,7 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
           Newest
         </Link>
         <Link
-          href={`/admin/orders?${new URLSearchParams({ ...(statusFilter ? { status: statusFilter } : {}), ...(searchQuery ? { search: searchQuery } : {}), sort: "oldest" }).toString()}`}
+          href={orderQuery({ sort: "oldest" })}
           className={`px-3 py-1.5 border tracking-wider uppercase transition-colors ${
             sortOrder === "oldest"
               ? "border-gold text-gold bg-gold/5"
@@ -116,13 +155,27 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
       </div>
 
       {/* Search */}
-      <form method="GET" action="/admin/orders" className="flex gap-2">
+      <form method="GET" action="/admin/orders" className="flex flex-wrap gap-2">
         <input
           type="text"
           name="search"
           defaultValue={searchQuery}
           placeholder="Search by order ID or email..."
           className="flex-1 border border-gold/30 bg-transparent p-2.5 text-xs focus:outline-none focus:border-gold"
+        />
+        <input
+          type="date"
+          name="startDate"
+          defaultValue={startDate}
+          aria-label="Orders from date"
+          className="border border-gold/30 bg-transparent p-2.5 text-xs focus:outline-none focus:border-gold"
+        />
+        <input
+          type="date"
+          name="endDate"
+          defaultValue={endDate}
+          aria-label="Orders through date"
+          className="border border-gold/30 bg-transparent p-2.5 text-xs focus:outline-none focus:border-gold"
         />
         {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
         <input type="hidden" name="sort" value={sortOrder} />

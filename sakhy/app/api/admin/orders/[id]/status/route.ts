@@ -1,17 +1,22 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import Razorpay from "razorpay";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApiSession } from "@/lib/admin-api";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 
 const statusSchema = z.object({
   status: z.nativeEnum(OrderStatus).optional(),
-  trackingNumber: z.string().trim().max(120).optional(),
+  trackingNumber: z.string().trim().max(120).nullable().optional(),
 }).refine(
   (data) => data.status !== undefined || data.trackingNumber !== undefined,
   { message: "Provide at least one of: status, trackingNumber." }
-);
+).strict();
+
+const FULFILLMENT_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
+  paid: ["processing"],
+  processing: ["shipped"],
+  shipped: ["delivered"],
+};
 
 export async function PATCH(
   req: Request,
@@ -21,7 +26,12 @@ export async function PATCH(
   if (error) return error;
 
   const { id: orderId } = await params;
-  const body = await req.json();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
+  }
   const parsed = statusSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -43,63 +53,42 @@ export async function PATCH(
       return NextResponse.json({ error: "Order not found." }, { status: 404 });
     }
 
-    // Build update payload
-    const updateData: Record<string, unknown> = {};
-
-    if (trackingNumber !== undefined) {
-      updateData.trackingNumber = trackingNumber || null;
-    }
-
     if (newStatus) {
-      // No-op if status unchanged
-      if (order.status === newStatus && trackingNumber === undefined) {
-        return NextResponse.json({ order });
+      const allowedNextStatuses = FULFILLMENT_TRANSITIONS[order.status] || [];
+      if (!allowedNextStatuses.includes(newStatus)) {
+        return NextResponse.json(
+          { error: `Cannot transition an order from "${order.status}" to "${newStatus}".` },
+          { status: 400 }
+        );
       }
 
-      // ── Razorpay Automated Refund ──
-      if (newStatus === "refunded") {
-        const payment = order.payment;
-        if (payment && payment.status === "captured" && payment.providerPaymentId) {
-          if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-            return NextResponse.json(
-              { error: "Razorpay server keys not configured for refunds." },
-              { status: 500 }
-            );
-          }
-
-          const rzp = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID,
-            key_secret: process.env.RAZORPAY_KEY_SECRET,
-          });
-
-          try {
-            const refundResult = await rzp.payments.refund(payment.providerPaymentId, {
-              amount: payment.amount,
-              notes: {
-                localOrderId: orderId,
-                reason: "Admin forced full refund from UI",
-              },
-            });
-
-            await prisma.payment.update({
-              where: { id: payment.id },
-              data: {
-                status: PaymentStatus.refunded,
-                rawPayload: refundResult as unknown as any,
-              },
-            });
-          } catch (rzpError: any) {
-            console.error("Razorpay Refund Error", rzpError);
-            return NextResponse.json(
-              { error: rzpError?.error?.description || "Razorpay API rejected the refund." },
-              { status: 400 }
-            );
-          }
-        }
+      if (
+        order.payment?.status !== PaymentStatus.captured ||
+        !order.payment.signatureVerified
+      ) {
+        return NextResponse.json(
+          { error: "Only verified, captured payments can enter fulfillment." },
+          { status: 400 }
+        );
       }
-
-      updateData.status = newStatus;
     }
+
+    if (
+      trackingNumber !== undefined &&
+      newStatus !== OrderStatus.shipped &&
+      order.status !== OrderStatus.shipped &&
+      order.status !== OrderStatus.delivered
+    ) {
+      return NextResponse.json(
+        { error: "A tracking reference can only be saved for shipped or delivered orders." },
+        { status: 400 }
+      );
+    }
+
+    const updateData = {
+      ...(newStatus ? { status: newStatus } : {}),
+      ...(trackingNumber !== undefined ? { trackingNumber: trackingNumber || null } : {}),
+    };
 
     const updated = await prisma.order.update({
       where: { id: orderId },

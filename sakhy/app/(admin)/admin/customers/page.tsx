@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/format";
 import { getAuthSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { Prisma } from "@prisma/client";
 
 interface PageProps {
   searchParams: Promise<{
@@ -21,7 +22,7 @@ export default async function AdminCustomersPage({ searchParams }: PageProps) {
   const searchQuery = sp.search || "";
   const sortOrder = sp.sort || "newest";
 
-  const where: Record<string, unknown> = { role: "customer" };
+  const where: Prisma.UserWhereInput = { role: "customer" };
 
   if (searchQuery) {
     where.OR = [
@@ -36,7 +37,7 @@ export default async function AdminCustomersPage({ searchParams }: PageProps) {
     : { createdAt: "desc" as const };
 
   const customers = await prisma.user.findMany({
-    where: where as any,
+    where,
     orderBy,
     take: 100,
     select: {

@@ -1,16 +1,17 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/format";
 import { getAuthSession } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
-import { OrderStatus } from "@prisma/client";
+
 import OrderDetailClient from "./OrderDetailClient";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  pending: ["paid", "cancelled"],
-  paid: ["processing", "cancelled", "refunded"],
-  processing: ["shipped", "cancelled"],
-  shipped: ["delivered", "cancelled"],
-  delivered: ["refunded"],
+  pending: [],
+  paid: ["processing"],
+  processing: ["shipped"],
+  shipped: ["delivered"],
+  delivered: [],
   cancelled: [],
   refunded: [],
 };
@@ -252,12 +253,12 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
       </div>
 
       {/* Back link */}
-      <a
+      <Link
         href="/admin/orders"
         className="inline-block text-[10px] uppercase tracking-widest text-gold hover:text-gold-light transition-colors"
       >
         &larr; Back to Orders
-      </a>
+      </Link>
     </section>
   );
 }
