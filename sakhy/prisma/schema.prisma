@@ -305,6 +305,18 @@ model Coupon {
   @@map("coupons")
 }
 
+/// Generic key→value store for site-wide settings (hero copy, shipping, tax).
+/// Known keys: hero_supertitle, hero_headline, hero_subheadline,
+///             hero_cta_primary, hero_cta_secondary,
+///             shipping_flat_paise, tax_rate_bps  (bps = basis points, e.g. 1800 = 18%)
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
 /// Admin-editable social proof. Managed via /admin settings (Phase 4).
 /// Never hardcode testimonials in source — this table is the source of truth.
 model Testimonial {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getSiteSettings } from "@/lib/site-settings";
 import Marquee from "@/components/motion/Marquee";
 import ScrollReveal from "@/components/motion/ScrollReveal";
 import TestimonialCarousel from "@/components/motion/TestimonialCarousel";
@@ -11,37 +12,39 @@ import Button from "@/components/ui/Button";
 export const revalidate = 60;
 
 export default async function HomePage() {
-  // Fetch dynamic content from local PostgreSQL DB
-  const [categories, featuredProducts, weaveTypes, dbTestimonials] = await Promise.all([
-    prisma.category.findMany({
-      include: {
-        products: {
-          where: { status: "published" },
-          take: 1,
-          include: { variants: true },
+  // Fetch dynamic content — settings in parallel with product/testimonial data
+  const [categories, featuredProducts, weaveTypes, dbTestimonials, siteSettings] =
+    await Promise.all([
+      prisma.category.findMany({
+        include: {
+          products: {
+            where: { status: "published" },
+            take: 1,
+            include: { variants: true },
+          },
         },
-      },
-    }),
-    prisma.product.findMany({
-      where: { status: "published" },
-      take: 4,
-      orderBy: { createdAt: "desc" },
-      include: {
-        variants: {
-          take: 1,
+      }),
+      prisma.product.findMany({
+        where: { status: "published" },
+        take: 4,
+        orderBy: { createdAt: "desc" },
+        include: {
+          variants: {
+            take: 1,
+          },
         },
-      },
-    }),
-    prisma.product.findMany({
-      where: { status: "published" },
-      select: { fabricType: true },
-      distinct: ["fabricType"],
-    }),
-    prisma.testimonial.findMany({
-      where: { isPublished: true },
-      orderBy: { sortOrder: "asc" },
-    }),
-  ]);
+      }),
+      prisma.product.findMany({
+        where: { status: "published" },
+        select: { fabricType: true },
+        distinct: ["fabricType"],
+      }),
+      prisma.testimonial.findMany({
+        where: { isPublished: true },
+        orderBy: { sortOrder: "asc" },
+      }),
+      getSiteSettings(),
+    ]);
 
   // Fallback items in case of empty records
   const weavesList = weaveTypes.length > 0
@@ -80,6 +83,16 @@ export default async function HomePage() {
     },
   ];
 
+  // Hero copy from DB (admin-editable) — falls back to defaults if not yet configured
+  const heroSupertitle = siteSettings.hero_supertitle;
+  // Split headline on " & " to preserve the italic-gold "& X" visual treatment
+  const headlineParts = siteSettings.hero_headline.split(" & ");
+  const headlineMain = headlineParts[0] ?? siteSettings.hero_headline;
+  const headlineAccent = headlineParts.length > 1 ? headlineParts.slice(1).join(" & ") : null;
+  const heroSubheadline = siteSettings.hero_subheadline;
+  const ctaPrimary = siteSettings.hero_cta_primary || "Explore Collections";
+  const ctaSecondary = siteSettings.hero_cta_secondary || "Our Heritage";
+
   return (
     <div className="bg-ivory overflow-hidden">
       {/* ── SECTION 1: HERO ── */}
@@ -97,30 +110,38 @@ export default async function HomePage() {
           <div className="max-w-3xl">
             <ScrollReveal direction="up" delay={0.2}>
               <span className="text-gold text-[10px] sm:text-xs tracking-[0.5em] uppercase mb-6 block font-sans font-light">
-                Preserving Heritage, Weave by Weave
+                {heroSupertitle}
               </span>
             </ScrollReveal>
 
             <ScrollReveal direction="up" delay={0.4}>
               <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl font-light leading-[1.1] text-ivory mb-8">
-                Draped in <br />
-                <em className="text-gold not-italic font-accent font-normal italic pr-2">Legacy & Grace</em>
+                {headlineAccent ? (
+                  <>
+                    {headlineMain} &{" "}<br />
+                    <em className="text-gold not-italic font-accent font-normal italic pr-2">
+                      {headlineAccent}
+                    </em>
+                  </>
+                ) : (
+                  headlineMain
+                )}
               </h1>
             </ScrollReveal>
 
             <ScrollReveal direction="up" delay={0.6}>
               <p className="text-sm tracking-wide text-ivory/60 leading-relaxed max-w-md mb-12 font-sans font-light">
-                Hand-woven masterpieces born from generational knowledge. Explore authentic silks crafted by India&apos;s finest weavers.
+                {heroSubheadline}
               </p>
             </ScrollReveal>
 
             <ScrollReveal direction="up" delay={0.8}>
               <div className="flex flex-wrap gap-4 sm:gap-6">
                 <Button variant="primary" size="lg" href="/collections">
-                  Explore Collections
+                  {ctaPrimary}
                 </Button>
                 <Button variant="outline" size="lg" href="/heritage" className="!text-ivory !border-ivory/30 hover:!border-gold hover:!text-gold">
-                  Our Heritage
+                  {ctaSecondary}
                 </Button>
               </div>
             </ScrollReveal>

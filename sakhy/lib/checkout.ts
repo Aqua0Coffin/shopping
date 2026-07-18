@@ -7,6 +7,7 @@ import {
   Prisma,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { calculateOrderTotals } from "@/lib/site-settings";
 
 export const RESERVATION_TIMEOUT_MS = 15 * 60 * 1000;
 
@@ -190,6 +191,11 @@ export async function createCheckoutOrder(input: CreateCheckoutInput) {
     };
   } | null = null;
 
+  // Fetch shipping + tax rates before entering the serializable transaction
+  // (site_settings is a low-contention read; no need to lock it alongside inventory)
+  // We compute totals after we know the subtotal, so we pass a resolver in.
+  const getOrderTotals = (subtotal: number) => calculateOrderTotals(subtotal);
+
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     try {
       orderSnapshot = await prisma.$transaction(
@@ -255,14 +261,19 @@ export async function createCheckoutOrder(input: CreateCheckoutInput) {
             });
           }
 
+          // Read shipping + tax from DB settings (admin-configurable)
+          // Uses prisma directly (not tx) since site_settings is independent of the
+          // order reservation tables — this read does not need serializable isolation.
+          const { shipping, tax, total } = await getOrderTotals(subtotal);
+
           const order = await tx.order.create({
             data: {
               userId: user.id,
               addressId: address.id,
               subtotal,
-              shipping: 0,
-              tax: 0,
-              total: subtotal,
+              shipping,
+              tax,
+              total,
               reservationExpiresAt,
               items: {
                 create: normalizedItems.map((item) => {

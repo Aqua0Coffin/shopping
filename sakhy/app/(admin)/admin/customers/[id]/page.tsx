@@ -99,7 +99,7 @@ export default async function AdminCustomerDetailPage({ params }: PageProps) {
         <div>
           <h2 className="text-xs uppercase tracking-widest text-gold mb-3 font-semibold">Addresses</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {customer.addresses.map((addr) => (
+            {customer.addresses.map((addr: any) => (
               <div
                 key={addr.id}
                 className={`border p-3 text-xs text-charcoal/80 ${
@@ -146,7 +146,7 @@ export default async function AdminCustomerDetailPage({ params }: PageProps) {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order) => (
+                {orders.map((order: any) => (
                   <tr
                     key={order.id}
                     className="border-b border-gold/5 hover:bg-gold/5 transition-colors"

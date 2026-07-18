@@ -1,10 +1,20 @@
-export default function AdminSettingsPage() {
+import { getSiteSettings } from "@/lib/site-settings";
+import SiteSettingsClient from "@/components/admin/SiteSettingsClient";
+
+export default async function AdminSettingsPage() {
+  const settings = await getSiteSettings();
+
   return (
-    <section className="border border-gold/15 bg-silk/10 p-6">
-      <h1 className="font-display text-3xl font-light text-charcoal mb-2">Settings</h1>
-      <p className="text-xs text-muted/80">
-        Route is role-gated server-side. Shipping/tax config and homepage content blocks (testimonials + banners) will be built after auth review.
-      </p>
-    </section>
+    <SiteSettingsClient
+      initial={{
+        hero_supertitle: settings.hero_supertitle,
+        hero_headline: settings.hero_headline,
+        hero_subheadline: settings.hero_subheadline,
+        hero_cta_primary: settings.hero_cta_primary,
+        hero_cta_secondary: settings.hero_cta_secondary,
+        shipping_flat_paise: settings.shipping_flat_paise,
+        tax_rate_bps: settings.tax_rate_bps,
+      }}
+    />
   );
 }
