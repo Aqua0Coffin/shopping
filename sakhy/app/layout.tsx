@@ -62,6 +62,9 @@ export default function RootLayout({
       className={`${cormorant.variable} ${playfair.variable} ${raleway.variable}`}
     >
       <body className="antialiased font-sans font-light">
+        {process.env.NODE_ENV === "development" && (
+          <script src="https://unpkg.com/react-scan/dist/auto.global.js" crossOrigin="anonymous" />
+        )}
         {children}
       </body>
     </html>
