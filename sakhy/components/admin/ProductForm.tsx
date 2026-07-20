@@ -14,6 +14,7 @@ interface Props {
 export default function ProductForm({ categories, initialData }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -73,6 +74,29 @@ export default function ProductForm({ categories, initialData }: Props) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!initialData || !window.confirm("Are you sure you want to delete this product? This action cannot be undone.")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/products/${initialData.id}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete product");
+
+      router.push("/admin/products");
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message);
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && <p className="text-crimson text-sm">{error}</p>}
@@ -128,8 +152,22 @@ export default function ProductForm({ categories, initialData }: Props) {
         </div>
       </div>
 
-      <div className="flex justify-end">
-        <Button type="submit" loading={loading}>{initialData ? "Save Changes" : "Create Product"}</Button>
+      <div className="flex justify-between items-center pt-4">
+        <div>
+          {initialData && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={isDeleting || loading}
+              className="text-xs uppercase tracking-widest text-crimson hover:text-red-700 transition-colors disabled:opacity-50"
+            >
+              {isDeleting ? "Deleting..." : "Delete Product"}
+            </button>
+          )}
+        </div>
+        <Button type="submit" loading={loading} disabled={isDeleting}>
+          {initialData ? "Save Changes" : "Create Product"}
+        </Button>
       </div>
     </form>
   );
