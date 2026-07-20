@@ -20,8 +20,10 @@ export async function PATCH(
   const { error } = await requireAdminApiSession();
   if (error) return error;
 
-  const { variantId } = await context.params;
-  const body = await req.json();
+  const [{ variantId }, body] = await Promise.all([
+    context.params,
+    req.json(),
+  ]);
   const parsed = updateVariantSchema.safeParse(body);
 
   if (!parsed.success) {

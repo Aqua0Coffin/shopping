@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -10,6 +11,29 @@ import Button from "@/components/ui/Button";
 
 // Revalidate home page every 60 seconds to reflect product/inventory/testimonial updates
 export const revalidate = 60;
+
+  const processSteps = [
+    {
+      num: "01",
+      title: "Thread Selection",
+      desc: "Pure mulberry silk threads are tested for tensile strength and hand-dyed in organic vats.",
+    },
+    {
+      num: "02",
+      title: "Zari Verification",
+      desc: "Every inch of gold and silver zari thread is authenticated for metal purity before warping.",
+    },
+    {
+      num: "03",
+      title: "Hand Looming",
+      desc: "Two master weavers synchronize hand and foot movements on traditional wooden pit looms.",
+    },
+    {
+      num: "04",
+      title: "The Blessing",
+      desc: "Each completed saree is steam-pressed and blessed by the artisan community before cataloging.",
+    },
+  ];
 
 export default async function HomePage() {
   // Fetch dynamic content — settings in parallel with product/testimonial data
@@ -60,28 +84,6 @@ export default async function HomePage() {
   }));
 
   // Visual/Motion process steps from index.html
-  const processSteps = [
-    {
-      num: "01",
-      title: "Thread Selection",
-      desc: "Pure mulberry silk threads are tested for tensile strength and hand-dyed in organic vats.",
-    },
-    {
-      num: "02",
-      title: "Zari Verification",
-      desc: "Every inch of gold and silver zari thread is authenticated for metal purity before warping.",
-    },
-    {
-      num: "03",
-      title: "Hand Looming",
-      desc: "Two master weavers synchronize hand and foot movements on traditional wooden pit looms.",
-    },
-    {
-      num: "04",
-      title: "The Blessing",
-      desc: "Each completed saree is steam-pressed and blessed by the artisan community before cataloging.",
-    },
-  ];
 
   // Hero copy from DB (admin-editable) — falls back to defaults if not yet configured
   const heroSupertitle = siteSettings.hero_supertitle;
@@ -172,12 +174,7 @@ export default async function HomePage() {
                   className="group relative flex flex-col justify-end aspect-[4/5] bg-silk/40 overflow-hidden border border-gold/10 hover:border-gold/30 transition-all duration-500 hover:shadow-[0_12px_24px_-10px_rgba(201,168,76,0.1)]"
                 >
                   {image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={image}
-                      alt={category.name}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                    />
+                    <Image src={image} alt={category.name} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-105" sizes="(max-width: 768px) 100vw, 33vw" />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-tr from-silk/30 to-silk/70 flex items-center justify-center">
                       <div className="absolute inset-4 border border-gold/5" />

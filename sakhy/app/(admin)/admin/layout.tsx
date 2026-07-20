@@ -1,16 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthSession } from "@/lib/auth";
-
-const links = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/products", label: "Products" },
-  { href: "/admin/inventory", label: "Inventory" },
-  { href: "/admin/orders", label: "Orders" },
-  { href: "/admin/customers", label: "Customers" },
-  { href: "/admin/settings", label: "Settings" },
-  { href: "/admin/settings/testimonials", label: "↳ Testimonials" },
-];
+import AdminSidebar from "@/components/admin/AdminSidebar";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getAuthSession();
@@ -24,37 +14,30 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-screen bg-ivory text-charcoal">
-      <header className="border-b border-gold/15 bg-silk/20">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-5 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.25em] text-gold">Sakhy Admin</p>
-            <p className="text-sm text-charcoal">{session.user.email}</p>
-          </div>
-          <Link
-            href="/api/auth/signout?callbackUrl=/"
-            className="text-[10px] uppercase tracking-widest text-gold hover:text-gold-light transition-colors duration-300 font-medium"
-          >
-            Sign Out
-          </Link>
-        </div>
-      </header>
+    <div className="min-h-screen font-sans" style={{ background: "#F5EFE9" }}>
+      {/* Dark fixed sidebar */}
+      <AdminSidebar email={session.user.email ?? ""} />
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-8">
-        <aside className="border border-gold/15 bg-silk/10 p-4 h-fit">
-          <nav className="flex flex-col gap-2">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-xs uppercase tracking-widest text-charcoal/80 hover:text-gold transition-colors px-2 py-2"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </aside>
-        <main>{children}</main>
+      {/* Content — offset by sidebar width */}
+      <div className="ml-[220px] flex flex-col min-h-screen">
+        {/* Slim top bar */}
+        <header className="sticky top-0 z-30 h-[60px] flex items-center border-b border-[#B08D5E]/12 bg-[#F5EFE9]/90 backdrop-blur-sm px-8">
+          {/* Breadcrumb slot — pages can render their own heading in content */}
+          <div className="flex-1" />
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] uppercase tracking-widest text-[#8A7B6A] hover:text-[#B08D5E] transition-colors mr-6"
+          >
+            View Store ↗
+          </a>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 px-8 py-8 max-w-[1200px] w-full mx-auto">
+          {children}
+        </main>
       </div>
     </div>
   );

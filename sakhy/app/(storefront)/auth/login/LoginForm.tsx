@@ -8,7 +8,10 @@ import Button from "@/components/ui/Button";
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/orders";
+  let callbackUrl = searchParams.get("callbackUrl") || "/orders";
+  if (!callbackUrl.startsWith("/") || callbackUrl.startsWith("//")) {
+    callbackUrl = "/orders";
+  }
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

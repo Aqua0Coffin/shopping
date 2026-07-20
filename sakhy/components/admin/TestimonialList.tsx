@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 interface Testimonial {
@@ -76,12 +77,7 @@ export default function TestimonialList({
               <td className="px-5 py-4 text-muted font-mono text-xs">{t.sortOrder}</td>
               <td className="px-5 py-4 text-charcoal font-medium max-w-[160px]">
                 {t.imageUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={t.imageUrl}
-                    alt={t.customerName}
-                    className="w-8 h-8 rounded-full object-cover border border-gold/20 mb-1"
-                  />
+                  <div className="relative w-8 h-8 rounded-full overflow-hidden border border-gold/20 mb-1"><Image src={t.imageUrl} alt={t.customerName} fill className="object-cover" sizes="32px" /></div>
                 )}
                 {t.customerName}
               </td>
@@ -90,7 +86,7 @@ export default function TestimonialList({
               </td>
               <td className="px-5 py-4 text-muted text-xs">{t.location}</td>
               <td className="px-5 py-4">
-                <button
+                <button type="button"
                   onClick={() => handleToggle(t.id, t.isPublished)}
                   className={`text-[10px] uppercase tracking-wider px-2 py-1 rounded-full cursor-pointer transition-colors ${
                     t.isPublished
@@ -103,13 +99,13 @@ export default function TestimonialList({
               </td>
               <td className="px-5 py-4 text-right">
                 <div className="flex gap-4 justify-end">
-                  <button
+                  <button type="button"
                     onClick={() => onEdit(t)}
                     className="text-xs uppercase tracking-widest text-gold hover:text-gold-light transition-colors cursor-pointer"
                   >
                     Edit
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => handleDelete(t.id)}
                     disabled={deleting === t.id}
                     className="text-xs uppercase tracking-widest text-crimson/70 hover:text-crimson transition-colors disabled:opacity-40 cursor-pointer"

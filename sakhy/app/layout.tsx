@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import {
   Cormorant_Garamond,
   Playfair_Display,
@@ -63,7 +64,7 @@ export default function RootLayout({
     >
       <body className="antialiased font-sans font-light">
         {process.env.NODE_ENV === "development" && (
-          <script src="https://unpkg.com/react-scan/dist/auto.global.js" crossOrigin="anonymous" />
+          <Script src="https://unpkg.com/react-scan/dist/auto.global.js" crossOrigin="anonymous" />
         )}
         {children}
       </body>

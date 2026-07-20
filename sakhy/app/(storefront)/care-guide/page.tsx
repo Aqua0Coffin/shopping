@@ -1,7 +1,6 @@
 import ScrollReveal from "@/components/motion/ScrollReveal";
 import SectionHeading from "@/components/ui/SectionHeading";
 
-export default function CareGuidePage() {
   const sections = [
     {
       title: "Storage Dynamics",
@@ -28,6 +27,8 @@ export default function CareGuidePage() {
       ]
     }
   ];
+
+export default function CareGuidePage() {
 
   return (
     <div className="py-28 px-6 sm:px-8 max-w-3xl mx-auto bg-ivory font-sans font-light">

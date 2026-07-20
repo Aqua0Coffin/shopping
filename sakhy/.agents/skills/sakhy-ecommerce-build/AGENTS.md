@@ -11,16 +11,19 @@ A client-supplied static HTML file was the original design reference. It is a **
 ## 2. Design Tokens (do not invent new ones — extend these)
 
 ```css
---gold: #C9A84C;
---gold-light: #E8C97A;
---gold-pale: #F5E6B8;
---deep: #1A0A00;      /* near-black warm base */
---crimson: #8B1A1A;
---ivory: #FAF6EE;      /* body background */
---silk: #F0E6D3;
---charcoal: #2C2416;
---muted: #8A7B6A;
+--gold: #B08D5E;        /* was #C9A84C — muted warm caramel-gold, less "shiny metallic," more natural-dye feel, per client reference photo */
+--gold-light: #C9AC7E;  /* was #E8C97A — softened to match */
+--gold-pale: #E8DCC8;   /* was #F5E6B8 — warmer, less yellow */
+--deep: #1A0A00;      /* near-black warm base, unchanged */
+--crimson: #8B1A1A;    /* unchanged — still used for the occasional accent, reference didn't show a strong red */
+--ivory: #F5EFE9;      /* was #FAF6EE — warmer, deeper cream to match reference background, still the body background */
+--silk: #E8DCC8;       /* was #F0E6D3 — aligned with gold-pale for consistency */
+--charcoal: #2C2416;   /* unchanged, close to reference already */
+--muted: #8A7B6A;      /* unchanged */
+--tan: #D2C3B2;         /* new — soft neutral tan for secondary text/borders/dividers, sits between silk and muted, from client reference photo */
 ```
+
+**Update, approved:** these values were revised from a client-provided reference product photo (a warmer, more muted "aged brass"/natural-dye palette vs. the original brighter gold). The reference was explicitly for **color only** — not layout, not the deal-driven/discount styling, not Amazon-listing conventions. The heritage/editorial brand direction, typography, and motion language are unchanged.
 
 Typography: **Cormorant Garamond** (serif, display/headings), **Playfair Display** (serif, accent), **Raleway** (sans, body/UI, light weights 200–400). Self-host via `next/font`, not a Google Fonts CDN `<link>`.
 
@@ -138,16 +141,24 @@ Treat every item below as a build requirement, same weight as the inventory/paym
 **Monitoring**
 - Sentry (already in the stack per Section 3) should be configured to flag repeated auth failures and payment-verification failures, not just unhandled exceptions — these are the signals that show an attack is happening, not just a bug.
 
-## 8. Pre-Launch Checklist (deferred items — do not treat as done until closed)
+## 8. Available Agent Tooling — Use These Proactively
+
+- **Context7 (MCP)**: query for current, version-specific documentation before writing or debugging any code involving a library/framework API — especially fast-moving ones (Next.js App Router, Prisma, NextAuth). This directly targets the failure mode that caused the earlier NextAuth v4-vs-v5 confusion in this project (an agent applying v5 patterns — a bare `auth()` call — to a v4 codebase, purely from training-data assumptions). Use it before assuming an API shape rather than after something breaks; don't wait to be asked.
+- **React Doctor**: run after building or modifying any React component surface (`npx react-doctor@latest`, or its agent-skill form) — scans for anti-patterns (unnecessary `useEffect`s, accessibility issues, prop drilling instead of composition) and gives a 0–100 health score. Known limitation: some rules have real false-positive rates on idiomatic patterns (e.g. misfiring on certain `useRef` usage or i18n/translation components) — treat findings as leads to investigate, not instructions to blindly auto-fix.
+- **React Scan**: use for targeted performance passes — detects unnecessary re-renders. Not needed after every phase; run it as part of pre-launch performance verification, or when a specific page feels sluggish.
+
+## 9. Pre-Launch Checklist (deferred items — do not treat as done until closed)
 
 - **Razorpay integration is not yet wired up.** Payment/checkout logic, stock reservation, and webhook idempotency were built and tested against a mocked Razorpay client (see the Phase 3 concurrency test), not a real account. Test-mode API keys need to be generated and added to the environment before checkout, webhooks, or refunds can be genuinely verified — see Section 3 for the intended provider. This must be done, in test mode at minimum, before Phase 4c's refund flow can be considered verified, and switched to live-mode keys (requires KYC) only immediately before public launch.
 - Track any other phase/feature marked "code-complete but unverified due to a blocker" here as it comes up, so deferred verification isn't lost by the time launch approaches.
 
-## 9. How to Use This Skill in a Task
+## 10. How to Use This Skill in a Task
 
 1. Before generating any code, confirm the task against Sections 3 (stack) and 5 (schema) — don't introduce a new library, database, or model shape without checking here first.
 2. For any UI work, pull colors/type/motion from Section 2 rather than picking new ones.
 3. For any feature touching stock or money, implement it per the rules in Section 5 before wiring up the UI around it.
 4. For any feature touching auth, payments, file uploads, or public-facing forms, check it against Section 7 before considering it done.
-5. If a request seems to need something listed as out-of-scope in Section 3, say so explicitly instead of quietly adding it.
-6. Seed/test data: the four reference products range ₹12,800–₹65,000 — use this range for realistic test fixtures.
+5. Before writing code against a library/framework API, especially Next.js, Prisma, or NextAuth, query Context7 for current version-specific docs rather than relying on training data — see Section 8.
+6. After building or modifying React components, run React Doctor as a verification step, same as `npm run build`/lint — see Section 8.
+7. If a request seems to need something listed as out-of-scope in Section 3, say so explicitly instead of quietly adding it.
+8. Seed/test data: the four reference products range ₹12,800–₹65,000 — use this range for realistic test fixtures.

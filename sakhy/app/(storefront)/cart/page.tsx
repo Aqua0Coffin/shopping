@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/lib/cart-context";
 import { formatPrice } from "@/lib/format";
@@ -36,12 +37,7 @@ export default function CartPage() {
                 {/* Product Image Swatch */}
                 <div className="w-24 aspect-[2/3] bg-silk/40 border border-gold/5 flex-shrink-0 relative overflow-hidden flex items-center justify-center">
                   {item.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <Image src={item.image} alt={item.name} fill className="object-cover" sizes="100px" />
                   ) : (
                     <div className="text-center p-3">
                       <div className="absolute inset-2 border border-gold/5" />
@@ -72,7 +68,7 @@ export default function CartPage() {
 
                   {/* Quantity Stepper */}
                   <div className="flex items-center border border-gold/15 w-fit mt-auto bg-ivory">
-                    <button
+                    <button type="button"
                       onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
                       className="px-3 py-1.5 text-xs text-charcoal hover:bg-gold/5 active:bg-gold/10 transition-all font-sans cursor-pointer focus:outline-none"
                     >
@@ -81,7 +77,7 @@ export default function CartPage() {
                     <span className="px-3 text-[11px] font-sans font-medium text-charcoal select-none">
                       {item.quantity}
                     </span>
-                    <button
+                    <button type="button"
                       onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
                       className="px-3 py-1.5 text-xs text-charcoal hover:bg-gold/5 active:bg-gold/10 transition-all font-sans cursor-pointer focus:outline-none"
                       disabled={item.quantity >= item.stockQty}
@@ -98,7 +94,7 @@ export default function CartPage() {
                   </span>
                   
                   {/* Remove Button */}
-                  <button
+                  <button type="button"
                     onClick={() => removeItem(item.variantId)}
                     className="text-[9px] uppercase tracking-widest text-muted hover:text-crimson transition-colors duration-300 focus:outline-none font-sans cursor-pointer"
                   >

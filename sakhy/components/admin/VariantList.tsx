@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
@@ -64,8 +65,7 @@ export default function VariantList({ productId, variants }: Props) {
                 <div className="border border-gold/15 bg-ivory p-4 flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
                     {v.images?.[0] ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={v.images[0]} alt={v.color} className="w-16 h-16 object-cover border border-gold/20" />
+                      <div className="relative w-16 h-16 border border-gold/20"><Image src={v.images[0]} alt={v.color} fill className="object-cover" sizes="64px" /></div>
                     ) : (
                       <div className="w-16 h-16 bg-silk/30 border border-gold/20 flex items-center justify-center text-xs text-muted/50">No Image</div>
                     )}

@@ -50,8 +50,10 @@ export async function PATCH(
   const { error } = await requireAdminApiSession();
   if (error) return error;
 
-  const { productId } = await context.params;
-  const body = await req.json();
+  const [{ productId }, body] = await Promise.all([
+    context.params,
+    req.json(),
+  ]);
   const parsed = updateProductSchema.safeParse(body);
 
   if (!parsed.success) {

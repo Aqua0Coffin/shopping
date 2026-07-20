@@ -53,7 +53,7 @@ export default function TestimonialsClient({ initial }: Props) {
           </p>
         </div>
         {editing === null && (
-          <button
+          <button type="button"
             onClick={() => setEditing("new")}
             className="px-5 py-2 bg-gold text-deep text-[10px] uppercase tracking-widest font-medium hover:bg-gold-light transition-colors cursor-pointer"
           >

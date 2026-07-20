@@ -22,8 +22,10 @@ export async function POST(
   const { error, session } = await requireAdminApiSession();
   if (error || !session) return error;
 
-  const { productId } = await context.params;
-  const body = await req.json();
+  const [{ productId }, body] = await Promise.all([
+    context.params,
+    req.json(),
+  ]);
   const parsed = createVariantSchema.safeParse(body);
 
   if (!parsed.success) {

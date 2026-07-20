@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 interface Props {
@@ -53,8 +54,7 @@ export default function ImageUploader({ value, onChange }: Props) {
       <div className="flex flex-wrap gap-4">
         {value.map((url, i) => (
           <div key={i} className="relative w-24 h-24 border border-gold/20">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={url} alt="Uploaded" className="w-full h-full object-cover" />
+            <Image src={url} alt="Uploaded" fill className="object-cover" sizes="100px" />
             <button
               type="button"
               onClick={() => onChange(value.filter((_, index) => index !== i))}

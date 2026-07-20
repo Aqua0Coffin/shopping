@@ -1,13 +1,14 @@
 import ScrollReveal from "@/components/motion/ScrollReveal";
 import SectionHeading from "@/components/ui/SectionHeading";
 
-export default function HeritagePage() {
   const timeline = [
     { year: "1964", title: "The First Loom", text: "Founded in Yeola by a family of weavers wanting to preserve the traditional cotton-silk tapestry weaves." },
     { year: "1988", title: "Preserving Kanjivaram", text: "Opened a collaborative workshop in Kanchipuram to guarantee fair-trade wages and pure zari material controls." },
     { year: "2012", title: "Heirloom Archives", text: "Established the Sakhy archival library, collecting and restoring pattern drawings from the 18th century." },
     { year: "2026", title: "The Modern Loom", text: "Bridging generational weavers with patrons globally, keeping the craft viable for the next generation." },
   ];
+
+export default function HeritagePage() {
 
   return (
     <div className="py-28 px-6 sm:px-8 max-w-4xl mx-auto bg-ivory font-sans font-light">

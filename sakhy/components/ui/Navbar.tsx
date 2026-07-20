@@ -5,6 +5,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 
+const navLinks = [
+  { name: "Collections", href: "/collections" },
+  { name: "Heritage", href: "/heritage" },
+  { name: "Care Guide", href: "/care-guide" },
+  { name: "Orders", href: "/orders" },
+  { name: "Contact", href: "/contact" },
+];
+
 export default function Navbar() {
   const pathname = usePathname();
   const { cartCount, toggleCart } = useCart();
@@ -25,13 +33,6 @@ export default function Navbar() {
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  const navLinks = [
-    { name: "Collections", href: "/collections" },
-    { name: "Heritage", href: "/heritage" },
-    { name: "Care Guide", href: "/care-guide" },
-    { name: "Orders", href: "/orders" },
-    { name: "Contact", href: "/contact" },
-  ];
 
   return (
     <>
@@ -44,7 +45,7 @@ export default function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-6 sm:px-8 flex items-center justify-between">
           {/* Mobile Hamburger Button */}
-          <button
+          <button type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="flex md:hidden flex-col gap-1.5 justify-center items-center w-6 h-6 text-charcoal hover:text-gold transition-colors duration-300 focus:outline-none cursor-pointer"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
@@ -118,7 +119,7 @@ export default function Navbar() {
             </div>
 
             {/* Cart Button */}
-            <button
+            <button type="button"
               onClick={toggleCart}
               className="flex items-center gap-2 text-charcoal hover:text-gold transition-colors duration-300 focus:outline-none relative group cursor-pointer"
               aria-label="Shopping cart"

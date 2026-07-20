@@ -5,16 +5,18 @@
 /* colour/font variables without updating the spec first.       */
 
 @theme inline {
-  /* Colours */
-  --color-gold:         #C9A84C;
-  --color-gold-light:   #E8C97A;
-  --color-gold-pale:    #F5E6B8;
+  /* Colours — AGENTS.md §2, client reference palette (2026-07 revision) */
+  /* Muted warm caramel-gold / natural-dye feel, warmer cream background   */
+  --color-gold:         #B08D5E;  /* was #C9A84C — muted caramel-gold */
+  --color-gold-light:   #C9AC7E;  /* was #E8C97A — softened */
+  --color-gold-pale:    #E8DCC8;  /* was #F5E6B8 — warmer, less yellow */
   --color-deep:         #1A0A00;
   --color-crimson:      #8B1A1A;
-  --color-ivory:        #FAF6EE;
-  --color-silk:         #F0E6D3;
+  --color-ivory:        #F5EFE9;  /* was #FAF6EE — warmer, deeper cream */
+  --color-silk:         #E8DCC8;  /* was #F0E6D3 — aligned with gold-pale */
   --color-charcoal:     #2C2416;
   --color-muted:        #8A7B6A;
+  --color-tan:          #D2C3B2;  /* new — soft neutral for borders/dividers/secondary text */
 
   /* Fonts — CSS vars set by next/font in layout.tsx */
   --font-display: var(--font-cormorant), Georgia, serif;

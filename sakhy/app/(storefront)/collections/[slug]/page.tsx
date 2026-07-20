@@ -23,9 +23,18 @@ export async function generateStaticParams() {
   return categories.map((c) => ({ slug: c.slug }));
 }
 
+  const priceRanges = [
+    { label: "Under ₹15,000", value: "0-15000" },
+    { label: "₹15,000 - ₹35,000", value: "15000-35000" },
+    { label: "₹35,000 - ₹55,000", value: "35000-55000" },
+    { label: "Over ₹55,000", value: "55000-999999" },
+  ];
+
 export default async function CategoryPage({ params, searchParams }: PageProps) {
-  const { slug } = await params;
-  const { fabric, occasion, price } = await searchParams;
+  const [{ slug }, { fabric, occasion, price }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
 
   // 1. Fetch category details
   const category = await prisma.category.findUnique({
@@ -94,12 +103,6 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     return `/collections/${slug}${query ? `?${query}` : ""}`;
   };
 
-  const priceRanges = [
-    { label: "Under ₹15,000", value: "0-15000" },
-    { label: "₹15,000 - ₹35,000", value: "15000-35000" },
-    { label: "₹35,000 - ₹55,000", value: "35000-55000" },
-    { label: "Over ₹55,000", value: "55000-999999" },
-  ];
 
   return (
     <div className="py-28 px-6 sm:px-8 max-w-7xl mx-auto bg-ivory">

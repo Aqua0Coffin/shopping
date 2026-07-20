@@ -7,6 +7,12 @@ interface PriceTagProps {
   size?: "sm" | "md" | "lg";
 }
 
+  const sizeClasses = {
+    sm: "text-sm",
+    md: "text-lg",
+    lg: "text-2xl",
+  };
+
 export default function PriceTag({
   pricePaise,
   compareAtPricePaise,
@@ -16,11 +22,6 @@ export default function PriceTag({
   const formattedPrice = formatPrice(pricePaise);
   const formattedCompare = compareAtPricePaise ? formatPrice(compareAtPricePaise) : null;
 
-  const sizeClasses = {
-    sm: "text-sm",
-    md: "text-lg",
-    lg: "text-2xl",
-  };
 
   return (
     <div className={`flex items-center gap-3 font-display ${className}`}>

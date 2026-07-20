@@ -125,7 +125,7 @@ export default function OrderDetailClient({
         <div className="flex flex-wrap gap-2">
           {nextStatuses.length > 0 ? (
             nextStatuses.map((status) => (
-              <button
+              <button type="button"
                 key={status}
                 onClick={() => handleStatusChange(status)}
                 disabled={loadingStatus}
@@ -159,7 +159,7 @@ export default function OrderDetailClient({
             placeholder="Enter tracking number or courier reference..."
             className="flex-1 border border-gold/30 bg-transparent p-2.5 text-xs focus:outline-none focus:border-gold"
           />
-          <button
+          <button type="button"
             onClick={handleTrackingSave}
             disabled={loadingStatus}
             className="px-4 py-2 border border-gold/30 text-xs tracking-wider uppercase text-gold hover:bg-gold/5 transition-colors disabled:opacity-40 cursor-pointer"
@@ -179,7 +179,7 @@ export default function OrderDetailClient({
             Payment status: {paymentStatus}. Amount: ₹{(paymentAmount / 100).toLocaleString("en-IN")}.
             This will issue a full refund via Razorpay.
           </p>
-          <button
+          <button type="button"
             onClick={handleRefund}
             disabled={refunding}
             className="px-5 py-2.5 border border-crimson/50 text-xs uppercase tracking-wider text-crimson hover:bg-crimson/5 transition-all duration-300 disabled:opacity-40 cursor-pointer"

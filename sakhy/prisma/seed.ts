@@ -250,8 +250,10 @@ async function main() {
   // Dev admin credentials are seeded with bcrypt so NextAuth credentials login works.
   // Email: admin@sakhy.local | Password: Admin@1234
   const adminEmail = "admin@sakhy.local";
-  const adminPasswordHash = await hash("Admin@1234", 12);
-  const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
+  const [adminPasswordHash, existingAdmin] = await Promise.all([
+    hash("Admin@1234", 12),
+    prisma.user.findUnique({ where: { email: adminEmail } }),
+  ]);
   if (!existingAdmin) {
     await prisma.user.create({
       data: {

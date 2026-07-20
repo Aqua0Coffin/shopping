@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/format";
 import { getAuthSession } from "@/lib/auth";
@@ -123,12 +124,14 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
             >
               <div className="flex items-center gap-4">
                 {item.variant.images[0] ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={item.variant.images[0]}
-                    alt=""
-                    className="w-14 h-20 object-cover border border-gold/5"
-                  />
+                  <div className="relative w-14 h-20 border border-gold/5">
+                    <Image
+                      src={item.variant.images[0]}
+                      alt=""
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="w-14 h-20 bg-silk/30 border border-gold/5 flex items-center justify-center">
                     <span className="text-[8px] text-muted uppercase tracking-wider">No img</span>

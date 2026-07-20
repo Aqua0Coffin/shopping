@@ -1,17 +1,16 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
+export const metadata = { title: "Inventory — Sakhy Admin" };
+
 interface Props {
   searchParams: Promise<{ lowStock?: string }>;
 }
-
-export const metadata = { title: "Inventory" };
 
 export default async function AdminInventoryPage({ searchParams }: Props) {
   const { lowStock } = await searchParams;
   const filterLowStock = lowStock === "1";
 
-  // Join everything in one query — fine at this scale
   const variants = await prisma.productVariant.findMany({
     orderBy: [{ product: { name: "asc" } }, { sku: "asc" }],
     include: {
@@ -27,48 +26,48 @@ export default async function AdminInventoryPage({ searchParams }: Props) {
     },
   });
 
-  // Apply low-stock filter in memory (avoids a raw WHERE expression)
   const rows = filterLowStock
     ? variants.filter(
-        (v) =>
-          v.inventory &&
-          v.inventory.stockQty <= v.inventory.lowStockThreshold
+        (v) => v.inventory && v.inventory.stockQty <= v.inventory.lowStockThreshold
       )
     : variants;
 
   const totalLowStock = variants.filter(
-    (v) =>
-      v.inventory && v.inventory.stockQty <= v.inventory.lowStockThreshold
+    (v) => v.inventory && v.inventory.stockQty <= v.inventory.lowStockThreshold
   ).length;
 
   return (
-    <section className="space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-display text-3xl font-light text-charcoal">
-            Inventory
-          </h1>
-          {totalLowStock > 0 && (
-            <p className="text-[11px] text-crimson mt-1">
-              {totalLowStock} SKU{totalLowStock !== 1 ? "s" : ""} at or below
-              low-stock threshold
-            </p>
-          )}
+          <h1 className="font-display text-[2rem] font-light text-[#1A0A00] leading-none">Inventory</h1>
+          <p className="mt-1 text-[11px] text-[#8A7B6A] uppercase tracking-widest font-sans">
+            {rows.length} SKU{rows.length !== 1 ? "s" : ""}
+            {filterLowStock ? " · low stock only" : ""}
+          </p>
         </div>
 
-        <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest">
+        <div className="flex gap-2 items-center">
+          {totalLowStock > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#8B1A1A]/20 bg-[#8B1A1A]/5 px-3 py-1.5 text-[10px] uppercase tracking-wider text-[#8B1A1A] font-sans">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#8B1A1A] animate-pulse" />
+              {totalLowStock} low-stock
+            </span>
+          )}
           {filterLowStock ? (
             <Link
               href="/admin/inventory"
-              className="text-muted border border-gold/20 px-3 py-2 hover:border-gold/50 transition-colors"
+              id="inventory-show-all"
+              className="rounded border border-[#B08D5E]/20 px-3 py-1.5 text-[10px] uppercase tracking-wider text-[#8A7B6A] hover:border-[#B08D5E]/50 transition-colors font-sans"
             >
               Show All
             </Link>
           ) : (
             <Link
               href="/admin/inventory?lowStock=1"
-              className="text-crimson border border-crimson/25 px-3 py-2 hover:border-crimson/50 transition-colors"
+              id="inventory-filter-low"
+              className="rounded border border-[#8B1A1A]/25 px-3 py-1.5 text-[10px] uppercase tracking-wider text-[#8B1A1A] hover:border-[#8B1A1A]/50 transition-colors font-sans"
             >
               Low Stock Only ({totalLowStock})
             </Link>
@@ -77,105 +76,93 @@ export default async function AdminInventoryPage({ searchParams }: Props) {
       </div>
 
       {/* Table */}
-      <div className="border border-gold/15 bg-ivory overflow-x-auto">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-silk/20 text-[10px] uppercase tracking-widest text-muted border-b border-gold/15">
-            <tr>
-              <th className="px-5 py-4 font-normal">SKU</th>
-              <th className="px-5 py-4 font-normal">Product</th>
-              <th className="px-5 py-4 font-normal">Color</th>
-              <th className="px-5 py-4 font-normal text-right">Stock</th>
-              <th className="px-5 py-4 font-normal text-right">Reserved</th>
-              <th className="px-5 py-4 font-normal text-right">Available</th>
-              <th className="px-5 py-4 font-normal text-right">Threshold</th>
-              <th className="px-5 py-4 font-normal text-center">Status</th>
-              <th className="px-5 py-4 font-normal text-right">Actions</th>
+      <div className="rounded-lg border border-[#B08D5E]/15 bg-white overflow-hidden overflow-x-auto">
+        <table className="w-full text-xs font-sans whitespace-nowrap">
+          <thead>
+            <tr className="border-b border-[#B08D5E]/10">
+              {[
+                ["SKU",       "pl-6 text-left"],
+                ["Product",   "px-4 text-left"],
+                ["Color",     "px-4 text-left"],
+                ["Stock",     "px-4 text-right"],
+                ["Reserved",  "px-4 text-right"],
+                ["Available", "px-4 text-right"],
+                ["Threshold", "px-4 text-right"],
+                ["Status",    "px-4 text-center"],
+                ["",          "pr-6 text-right"],
+              ].map(([h, cls], i) => (
+                <th key={i} className={`py-3.5 text-[9px] uppercase tracking-widest text-[#8A7B6A] font-normal ${cls}`}>
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
-
-          <tbody className="divide-y divide-gold/10">
+          <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td
-                  colSpan={9}
-                  className="px-5 py-12 text-center text-muted text-xs"
-                >
+                <td colSpan={9} className="pl-6 py-14 text-center text-[#8A7B6A]">
                   {filterLowStock
-                    ? "No SKUs are currently at or below their low-stock threshold."
+                    ? "No SKUs are currently at or below their threshold. 🎉"
                     : "No variants found. Add products and variants first."}
                 </td>
               </tr>
             ) : (
-              rows.map((v) => {
+              rows.map((v, i) => {
                 const inv = v.inventory;
-                const available = inv
-                  ? Math.max(0, inv.stockQty - inv.reservedQty)
-                  : null;
-                const isLow =
-                  inv != null && inv.stockQty <= inv.lowStockThreshold;
+                const available = inv ? Math.max(0, inv.stockQty - inv.reservedQty) : null;
+                const isLow = inv != null && inv.stockQty <= inv.lowStockThreshold;
 
                 return (
                   <tr
                     key={v.id}
-                    className={`hover:bg-silk/5 transition-colors ${
-                      isLow ? "bg-crimson/[0.02]" : ""
-                    }`}
+                    id={`inv-row-${v.id}`}
+                    className={`transition-colors ${
+                      isLow ? "bg-[#8B1A1A]/[0.025] hover:bg-[#8B1A1A]/[0.04]" : "hover:bg-[#F5EFE9]/60"
+                    } ${i !== rows.length - 1 ? "border-b border-[#B08D5E]/6" : ""}`}
                   >
-                    <td className="px-5 py-3.5 font-mono text-xs text-charcoal/80">
-                      {v.sku}
-                    </td>
-                    <td className="px-5 py-3.5 text-charcoal">
+                    <td className="pl-6 pr-4 py-4 font-mono text-[#2C2416]/70">{v.sku}</td>
+                    <td className="px-4 py-4">
                       <Link
                         href={`/admin/products/${v.product.id}`}
-                        className="hover:text-gold transition-colors"
+                        className="text-[#1A0A00] hover:text-[#B08D5E] transition-colors"
                       >
                         {v.product.name}
                       </Link>
                     </td>
-                    <td className="px-5 py-3.5 text-charcoal/80">{v.color}</td>
-
-                    {/* Stock columns */}
-                    <td
-                      className={`px-5 py-3.5 text-right font-medium tabular-nums ${
-                        isLow ? "text-crimson" : "text-charcoal"
-                      }`}
-                    >
+                    <td className="px-4 py-4 text-[#2C2416]/70">{v.color}</td>
+                    <td className={`px-4 py-4 text-right tabular-nums font-medium ${isLow ? "text-[#8B1A1A]" : "text-[#1A0A00]"}`}>
                       {inv?.stockQty ?? "—"}
                     </td>
-                    <td className="px-5 py-3.5 text-right tabular-nums text-muted">
+                    <td className="px-4 py-4 text-right tabular-nums text-[#8A7B6A]">
                       {inv?.reservedQty ?? "—"}
                     </td>
-                    <td className="px-5 py-3.5 text-right tabular-nums text-charcoal/80">
+                    <td className="px-4 py-4 text-right tabular-nums text-[#2C2416]/70">
                       {available ?? "—"}
                     </td>
-                    <td className="px-5 py-3.5 text-right tabular-nums text-muted">
+                    <td className="px-4 py-4 text-right tabular-nums text-[#8A7B6A]">
                       {inv?.lowStockThreshold ?? "—"}
                     </td>
-
-                    {/* Status badge */}
-                    <td className="px-5 py-3.5 text-center">
+                    <td className="px-4 py-4 text-center">
                       {inv == null ? (
-                        <span className="text-[9px] uppercase tracking-wider text-muted">
-                          No record
-                        </span>
+                        <span className="text-[10px] text-[#8A7B6A] uppercase tracking-wider">No record</span>
                       ) : isLow ? (
-                        <span className="text-[9px] uppercase tracking-wider px-2 py-1 bg-crimson/10 text-crimson">
-                          Low Stock
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[#8B1A1A]/25 bg-[#8B1A1A]/5 px-2.5 py-1 text-[10px] uppercase tracking-wider text-[#8B1A1A]">
+                          <span className="w-1 h-1 rounded-full bg-[#8B1A1A]" />
+                          Low
                         </span>
                       ) : (
-                        <span className="text-[9px] uppercase tracking-wider px-2 py-1 bg-emerald-900/10 text-emerald-900">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200/60 bg-emerald-50 px-2.5 py-1 text-[10px] uppercase tracking-wider text-emerald-700">
+                          <span className="w-1 h-1 rounded-full bg-emerald-500" />
                           OK
                         </span>
                       )}
                     </td>
-
-                    {/* Actions */}
-                    <td className="px-5 py-3.5 text-right">
+                    <td className="pr-6 pl-4 py-4 text-right">
                       <Link
                         href={`/admin/inventory/${v.id}`}
-                        className="text-[10px] uppercase tracking-widest text-gold hover:text-gold-light transition-colors"
+                        className="text-[10px] uppercase tracking-widest text-[#B08D5E] hover:text-[#C9AC7E] transition-colors"
                       >
-                        Adjust
+                        Adjust →
                       </Link>
                     </td>
                   </tr>
@@ -185,6 +172,6 @@ export default async function AdminInventoryPage({ searchParams }: Props) {
           </tbody>
         </table>
       </div>
-    </section>
+    </div>
   );
 }

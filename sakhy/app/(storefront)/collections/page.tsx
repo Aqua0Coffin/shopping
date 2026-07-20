@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import ScrollReveal from "@/components/motion/ScrollReveal";
@@ -45,12 +46,7 @@ export default async function CollectionsPage() {
                 className="group relative flex flex-col justify-end aspect-[4/5] bg-silk/30 overflow-hidden border border-gold/10 hover:border-gold/30 transition-all duration-500 hover:shadow-[0_12px_24px_-10px_rgba(201,168,76,0.1)]"
               >
                 {image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={image}
-                    alt={category.name}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  />
+                  <Image src={image} alt={category.name} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-105" sizes="(max-width: 768px) 100vw, 33vw" />
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-tr from-silk/30 to-silk/70 flex items-center justify-center">
                     <div className="absolute inset-4 border border-gold/5" />

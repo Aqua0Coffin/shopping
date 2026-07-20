@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import PriceTag from "./PriceTag";
 
@@ -37,13 +38,7 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
       {/* Aspect Ratio Container for Saree Thumbnail */}
       <div className="relative aspect-[2/3] w-full bg-silk/30 overflow-hidden mb-6 flex items-center justify-center border border-gold/5">
         {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={image}
-            alt={`${product.name} - ${variant?.color || "Default"}`}
-            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-            loading="lazy"
-          />
+          <Image src={image} alt={`${product.name} - ${variant?.color || "Default"}`} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-105" sizes="(max-width: 768px) 100vw, 33vw" />
         ) : (
           /* Luxury Editorial Swatch Placeholder when image is missing */
           <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center select-none bg-gradient-to-br from-silk/30 to-silk/70">

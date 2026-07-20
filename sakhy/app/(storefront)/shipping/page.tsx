@@ -1,7 +1,6 @@
 import ScrollReveal from "@/components/motion/ScrollReveal";
 import SectionHeading from "@/components/ui/SectionHeading";
 
-export default function ShippingPage() {
   const policies = [
     {
       title: "Artisan Timelines",
@@ -16,6 +15,8 @@ export default function ShippingPage() {
       text: "Since each saree is hand-woven by specific artisan families, returns are eligible only for genuine weave defects or shipping damages reported within 48 hours of receipt. Custom blouse stitching, if ordered, voids return eligibility.",
     },
   ];
+
+export default function ShippingPage() {
 
   return (
     <div className="py-28 px-6 sm:px-8 max-w-3xl mx-auto bg-ivory font-sans font-light">

@@ -143,7 +143,7 @@ export default function CheckoutPage() {
           },
         },
         theme: {
-          color: "#C9A84C",
+          color: "#B08D5E", // AGENTS.md §2 --color-gold (2026-07 revision)
         },
       });
 

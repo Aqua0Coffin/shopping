@@ -54,21 +54,22 @@ export default async function AdminCustomerDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const orders = await prisma.order.findMany({
-    where: { userId: id },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-    include: {
-      _count: { select: { items: true } },
-      payment: { select: { status: true } },
-    },
-  });
-
-  const orderAggs = await prisma.order.groupBy({
-    by: ["userId"],
-    where: { userId: id, status: { not: "cancelled" } },
-    _sum: { total: true },
-  });
+  const [orders, orderAggs] = await Promise.all([
+    prisma.order.findMany({
+      where: { userId: id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: {
+        _count: { select: { items: true } },
+        payment: { select: { status: true } },
+      },
+    }),
+    prisma.order.groupBy({
+      by: ["userId"],
+      where: { userId: id, status: { not: "cancelled" } },
+      _sum: { total: true },
+    })
+  ]);
 
   const totalSpent = orderAggs[0]?._sum.total || 0;
 

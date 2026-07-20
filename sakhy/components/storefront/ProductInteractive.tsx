@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { formatPrice } from "@/lib/format";
@@ -84,12 +85,7 @@ export default function ProductInteractive({ product }: ProductInteractiveProps)
       <div className="flex flex-col gap-4">
         <div className="aspect-[2/3] w-full bg-silk/20 border border-gold/10 overflow-hidden flex items-center justify-center relative">
           {activeImages.length > 0 ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={activeImages[activeImageIdx]}
-              alt={`${product.name} — ${selectedVariant.color}`}
-              className="w-full h-full object-cover transition-all duration-500"
-            />
+            <Image src={activeImages[activeImageIdx]} alt={`${product.name} — ${selectedVariant.color}`} fill className="object-cover transition-all duration-500" sizes="(max-width: 768px) 100vw, 50vw" priority />
           ) : (
             /* Luxury Swatch Placeholder */
             <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-gradient-to-tr from-silk/30 to-silk/70 select-none">
@@ -119,7 +115,7 @@ export default function ProductInteractive({ product }: ProductInteractiveProps)
         {activeImages.length > 1 && (
           <div className="flex gap-3 overflow-x-auto pb-2">
             {activeImages.map((img, idx) => (
-              <button
+              <button type="button"
                 key={idx}
                 onClick={() => setActiveImageIdx(idx)}
                 className={`w-20 aspect-[2/3] flex-shrink-0 border transition-all duration-300 relative cursor-pointer ${
@@ -128,12 +124,7 @@ export default function ProductInteractive({ product }: ProductInteractiveProps)
                     : "border-gold/10 opacity-70 hover:opacity-100"
                 }`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img}
-                  alt={`Thumbnail ${idx + 1}`}
-                  className="w-full h-full object-cover"
-                />
+                <Image src={img} alt={`Thumbnail ${idx + 1}`} fill className="object-cover" sizes="80px" />
               </button>
             ))}
           </div>
@@ -181,7 +172,7 @@ export default function ProductInteractive({ product }: ProductInteractiveProps)
             </span>
             <div className="flex flex-wrap gap-3">
               {product.variants.map((v, idx) => (
-                <button
+                <button type="button"
                   key={v.id}
                   onClick={() => {
                     setSelectedVariantIdx(idx);
@@ -249,7 +240,7 @@ export default function ProductInteractive({ product }: ProductInteractiveProps)
           <div className="flex gap-4">
             {/* Quantity Stepper */}
             <div className="flex items-center border border-gold/30">
-              <button
+              <button type="button"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 className="px-4 py-3 text-sm text-charcoal hover:bg-gold/10 active:bg-gold/20 transition-all font-sans cursor-pointer focus:outline-none"
                 disabled={quantity <= 1}
@@ -259,7 +250,7 @@ export default function ProductInteractive({ product }: ProductInteractiveProps)
               <span className="px-4 text-xs font-sans font-medium text-charcoal select-none">
                 {quantity}
               </span>
-              <button
+              <button type="button"
                 onClick={() => setQuantity(Math.min(availableStock, quantity + 1))}
                 className="px-4 py-3 text-sm text-charcoal hover:bg-gold/10 active:bg-gold/20 transition-all font-sans cursor-pointer focus:outline-none"
                 disabled={quantity >= availableStock}

@@ -36,8 +36,10 @@ export async function PATCH(
   const { error } = await requireAdminApiSession();
   if (error) return error;
 
-  const { id } = await params;
-  const body = await req.json();
+  const [{ id }, body] = await Promise.all([
+    params,
+    req.json(),
+  ]);
   const parsed = patchSchema.safeParse(body);
 
   if (!parsed.success) {

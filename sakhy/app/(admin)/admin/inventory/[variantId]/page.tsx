@@ -7,6 +7,15 @@ interface Props {
   params: Promise<{ variantId: string }>;
 }
 
+const statCard = (label: string, value: string | number, highlight = false) => (
+  <div className="border border-gold/15 bg-silk/10 p-4">
+    <p className="text-[9px] uppercase tracking-widest text-muted mb-1.5">{label}</p>
+    <p className={`font-display text-2xl font-light ${highlight ? "text-crimson" : "text-charcoal"}`}>
+      {value}
+    </p>
+  </div>
+);
+
 export async function generateMetadata({ params }: Props) {
   const { variantId } = await params;
   const variant = await prisma.productVariant.findUnique({
@@ -55,14 +64,7 @@ export default async function InventoryVariantPage({ params }: Props) {
   const available = inv ? Math.max(0, inv.stockQty - inv.reservedQty) : null;
   const isLow = inv != null && inv.stockQty <= inv.lowStockThreshold;
 
-  const statCard = (label: string, value: string | number, highlight = false) => (
-    <div className="border border-gold/15 bg-silk/10 p-4">
-      <p className="text-[9px] uppercase tracking-widest text-muted mb-1.5">{label}</p>
-      <p className={`font-display text-2xl font-light ${highlight ? "text-crimson" : "text-charcoal"}`}>
-        {value}
-      </p>
-    </div>
-  );
+
 
   return (
     <section className="space-y-8">
