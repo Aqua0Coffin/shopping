@@ -19,11 +19,17 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const isHomepage = pathname === "/";
+  // Over a dark hero: homepage + not yet scrolled
+  const heroMode = isHomepage && !scrolled;
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
 
+    // Run once on mount to catch SSR/hydration mismatch
+    handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -36,6 +42,12 @@ export default function Navbar() {
 
   return (
     <>
+      {/* text-shadow utility injected inline so Tailwind's JIT doesn't need a plugin */}
+      <style>{`
+        .nav-text-shadow { text-shadow: 0 1px 3px rgba(26,10,0,0.55), 0 0 8px rgba(26,10,0,0.35); }
+        .nav-icon-shadow { filter: drop-shadow(0 1px 2px rgba(26,10,0,0.6)); }
+      `}</style>
+
       <nav
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ease-out border-b ${
           scrolled
@@ -47,7 +59,11 @@ export default function Navbar() {
           {/* Mobile Hamburger Button */}
           <button type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex md:hidden flex-col gap-1.5 justify-center items-center w-6 h-6 text-charcoal hover:text-gold transition-colors duration-300 focus:outline-none cursor-pointer"
+            className={`flex md:hidden flex-col gap-1.5 justify-center items-center w-6 h-6 transition-colors duration-300 focus:outline-none cursor-pointer ${
+              heroMode
+                ? "text-ivory hover:text-gold-light nav-icon-shadow"
+                : "text-charcoal hover:text-gold"
+            }`}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
             <span
@@ -68,7 +84,9 @@ export default function Navbar() {
           </button>
 
           {/* Nav Links (Desktop) */}
-          <div className="hidden md:flex items-center gap-8 text-[11px] font-sans uppercase tracking-[0.25em] text-charcoal/80">
+          <div className={`hidden md:flex items-center gap-8 text-[11px] font-sans uppercase tracking-[0.25em] transition-colors duration-500 ${
+            heroMode ? "text-ivory/90 nav-text-shadow" : "text-charcoal/80"
+          }`}>
             {navLinks.slice(0, 3).map((link) => {
               const active = pathname === link.href;
               return (
@@ -91,14 +109,18 @@ export default function Navbar() {
           {/* Logo (Centered) */}
           <Link
             href="/"
-            className="font-display text-2xl sm:text-3xl font-light tracking-[0.3em] text-charcoal hover:text-gold transition-colors duration-500 transform hover:scale-[1.01]"
+            className={`font-display text-2xl sm:text-3xl font-light tracking-[0.3em] transition-colors duration-500 transform hover:scale-[1.01] hover:text-gold ${
+              heroMode ? "text-ivory nav-text-shadow" : "text-charcoal"
+            }`}
           >
             SAKHY
           </Link>
 
           {/* Nav Links + Actions (Desktop Right) */}
           <div className="flex items-center gap-6 sm:gap-8">
-            <div className="hidden md:flex items-center gap-8 text-[11px] font-sans uppercase tracking-[0.25em] text-charcoal/80">
+            <div className={`hidden md:flex items-center gap-8 text-[11px] font-sans uppercase tracking-[0.25em] transition-colors duration-500 ${
+              heroMode ? "text-ivory/90 nav-text-shadow" : "text-charcoal/80"
+            }`}>
               {navLinks.slice(3).map((link) => {
                 const active = pathname === link.href;
                 return (
@@ -121,7 +143,11 @@ export default function Navbar() {
             {/* Cart Button */}
             <button type="button"
               onClick={toggleCart}
-              className="flex items-center gap-2 text-charcoal hover:text-gold transition-colors duration-300 focus:outline-none relative group cursor-pointer"
+              className={`flex items-center gap-2 transition-colors duration-300 focus:outline-none relative group cursor-pointer ${
+                heroMode
+                  ? "text-ivory hover:text-gold nav-icon-shadow"
+                  : "text-charcoal hover:text-gold"
+              }`}
               aria-label="Shopping cart"
             >
               <svg
