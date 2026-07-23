@@ -1,0 +1,334 @@
+// =====================================================================
+// SAKHY — Prisma Schema
+// Exactly mirrors AGENTS.md Section 5. Do NOT add, rename, or remove
+// fields without updating the spec first. All business-rule enforcement
+// (stock never goes negative, InventoryLog for every change, etc.) is
+// handled in service/API code — the schema defines the shape only.
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Connection URL is configured in prisma.config.ts (Prisma 7+)
+  // For local dev: postgresql://sakhy:sakhy_dev_password@localhost:5432/sakhy_db
+  // For Supabase: see .env.example for the correct connection string format
+}
+
+
+// ── ENUMS ────────────────────────────────────────────────────────────
+
+enum Role {
+  customer
+  admin
+  staff
+}
+
+enum ProductStatus {
+  draft
+  published
+  archived
+}
+
+enum OrderStatus {
+  pending
+  paid
+  processing
+  shipped
+  delivered
+  cancelled
+  refunded
+}
+
+enum PaymentProvider {
+  razorpay
+}
+
+enum PaymentStatus {
+  created
+  authorized
+  captured
+  failed
+  refunded
+}
+
+enum InventoryChangeReason {
+  restock
+  sale
+  adjustment
+  return
+}
+
+enum CouponType {
+  flat
+  percent
+}
+
+// ── MODELS ───────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  /// Hashed with bcrypt. Null for OAuth-only accounts.
+  passwordHash String?
+  role         Role      @default(customer)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  addresses    Address[]
+  orders       Order[]
+  inventoryLogs InventoryLog[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  line1     String
+  line2     String?
+  city      String
+  state     String
+  pincode   String
+  phone     String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders    Order[]
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  description String?
+  categoryId  String
+  /// E.g. "Kanjivaram Silk", "Banarasi Silk"
+  fabricType  String
+  /// E.g. "Bridal", "Festive", "Everyday"
+  occasion    String?
+  status      ProductStatus @default(draft)
+  /// Base/starting price in paise (1 INR = 100 paise) for precision.
+  /// Display as ₹ by dividing by 100.
+  basePrice   Int
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  category    Category      @relation(fields: [categoryId], references: [id])
+  variants    ProductVariant[]
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([slug])
+  @@map("products")
+}
+
+model ProductVariant {
+  id             String   @id @default(cuid())
+  productId      String
+  sku            String   @unique
+  color          String
+  blouseIncluded Boolean  @default(false)
+  borderType     String?
+  /// Price in paise. Overrides product.basePrice for this variant.
+  price          Int
+  /// Array of Supabase Storage public URLs
+  images         String[]
+  /// Weight in grams (used for shipping calculation)
+  weightGrams    Int?
+  createdAt      DateTime @default(now())
+
+  product        Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  inventory      Inventory?
+  inventoryLogs  InventoryLog[]
+  orderItems     OrderItem[]
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model Inventory {
+  id                String         @id @default(cuid())
+  variantId         String         @unique
+  stockQty          Int            @default(0)
+  /// Temporarily reserved during checkout — released on payment failure/timeout
+  reservedQty       Int            @default(0)
+  lowStockThreshold Int            @default(5)
+  updatedAt         DateTime       @updatedAt
+
+  variant           ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@map("inventory")
+}
+
+model InventoryLog {
+  id        String                @id @default(cuid())
+  variantId String
+  /// Positive = stock added, negative = stock removed
+  changeQty Int
+  reason    InventoryChangeReason
+  /// Human-readable actor: userId, "system", or staff name
+  actorId   String
+  /// FK to User — null when actorId is "system" or non-user string
+  actorUserId String?
+  createdAt DateTime              @default(now())
+  note      String?
+
+  variant   ProductVariant        @relation(fields: [variantId], references: [id])
+  actor     User?                 @relation(fields: [actorUserId], references: [id])
+
+  @@index([variantId])
+  @@index([createdAt])
+  @@map("inventory_logs")
+}
+
+
+model Order {
+  id        String      @id @default(cuid())
+  userId    String
+  status    OrderStatus @default(pending)
+  /// All monetary values in paise
+  subtotal  Int
+  shipping  Int         @default(0)
+  tax       Int         @default(0)
+  total     Int
+  addressId String
+  trackingNumber String?
+  reservationExpiresAt DateTime?
+  reservationReleasedAt DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user      User        @relation(fields: [userId], references: [id])
+  address   Address     @relation(fields: [addressId], references: [id])
+  items     OrderItem[]
+  payment   Payment?
+
+  @@index([userId])
+  @@index([status])
+  @@index([trackingNumber])
+  @@index([reservationExpiresAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id              String         @id @default(cuid())
+  orderId         String
+  variantId       String
+  quantity        Int
+  /// Price at time of purchase (in paise) — never recalculated
+  priceAtPurchase Int
+
+  order           Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variant         ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model Payment {
+  id                  String          @id @default(cuid())
+  orderId             String          @unique
+  provider            PaymentProvider @default(razorpay)
+  /// Razorpay's order ID (rzp_order_...)
+  providerOrderId     String          @unique
+  /// Razorpay's payment ID (rzp_pay_...) — populated after capture
+  providerPaymentId   String?         @unique
+  status              PaymentStatus   @default(created)
+  /// Amount in paise
+  amount              Int
+  /// True only after HMAC-SHA256 webhook signature verified
+  signatureVerified   Boolean         @default(false)
+  /// Raw webhook payload stored for audit / idempotency checks
+  rawPayload          Json?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  order               Order           @relation(fields: [orderId], references: [id])
+
+  @@index([providerOrderId])
+  @@map("payments")
+}
+
+model WebhookEvent {
+  id          String          @id @default(cuid())
+  provider    PaymentProvider @default(razorpay)
+  eventId     String          @unique
+  eventType   String
+  processedAt DateTime        @default(now())
+  rawPayload  Json
+
+  @@index([provider, eventType])
+  @@map("webhook_events")
+}
+
+model RateLimitBucket {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  count     Int      @default(0)
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+  @@map("rate_limit_buckets")
+}
+
+/// Schema-only — routes and UI are v1.1 (not required at launch).
+model Coupon {
+  id        String     @id @default(cuid())
+  code      String     @unique
+  type      CouponType
+  /// Flat: amount in paise. Percent: 0–100.
+  value     Int
+  expiresAt DateTime?
+  createdAt DateTime   @default(now())
+
+  @@map("coupons")
+}
+
+/// Generic key→value store for site-wide settings (hero copy, shipping, tax).
+/// Known keys: hero_supertitle, hero_headline, hero_subheadline,
+///             hero_cta_primary, hero_cta_secondary,
+///             shipping_flat_paise, tax_rate_bps  (bps = basis points, e.g. 1800 = 18%)
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+/// Admin-editable social proof. Managed via /admin settings (Phase 4).
+/// Never hardcode testimonials in source — this table is the source of truth.
+model Testimonial {
+  id           String   @id @default(cuid())
+  customerName String
+  quote        String
+  location     String
+  imageUrl     String?
+  isPublished  Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([isPublished, sortOrder])
+  @@map("testimonials")
+}
