@@ -1,41 +1,27 @@
 @import "tailwindcss";
 
 /* ── SAKHY DESIGN TOKENS ───────────────────────────────────── */
-/* Merged from reference project — preserving all existing      */
-/* tokens, adding reference light-palette aliases.              */
+/* These mirror AGENTS.md Section 2 exactly. Do not add new     */
+/* colour/font variables without updating the spec first.       */
 
 @theme inline {
-  /* ── Primary Sakhy Palette (existing tokens — do not remove) ── */
-  --color-gold:         #B08D5E;  /* muted caramel-gold */
-  --color-gold-light:   #C9AC7E;  /* softened gold */
-  --color-gold-pale:    #E8DCC8;  /* warmer, less yellow */
+  /* Colours — AGENTS.md §2, client reference palette (2026-07 revision) */
+  /* Muted warm caramel-gold / natural-dye feel, warmer cream background   */
+  --color-gold:         #B08D5E;  /* was #C9A84C — muted caramel-gold */
+  --color-gold-light:   #C9AC7E;  /* was #E8C97A — softened */
+  --color-gold-pale:    #E8DCC8;  /* was #F5E6B8 — warmer, less yellow */
   --color-deep:         #1A0A00;
   --color-crimson:      #8B1A1A;
-  --color-ivory:        #F5EFE9;  /* warm cream base background */
-  --color-silk:         #E8DCC8;  /* aligned with gold-pale */
+  --color-ivory:        #F5EFE9;  /* was #FAF6EE — warmer, deeper cream */
+  --color-silk:         #E8DCC8;  /* was #F0E6D3 — aligned with gold-pale */
   --color-charcoal:     #2C2416;
   --color-muted:        #8A7B6A;
-  --color-tan:          #D2C3B2;
-
-  /* ── Reference-aligned semantic aliases ── */
-  /* Background / foreground (reference uses --background / --ink) */
-  --color-background:   #FAF9F6;  /* reference --background: oklch(0.982 0.005 85) */
-  --color-ink:          #111111;  /* reference --ink / --foreground: oklch(0.18 0 0) */
-  --color-ink-muted:    #555555;  /* reference --ink-muted: oklch(0.45 0 0) */
-  --color-secondary:    #F5F3EE;  /* reference --secondary: oklch(0.96 0.006 85) */
-  --color-border-light: #EDECE8;  /* reference --border: oklch(0.94 0.003 85) */
-  --color-gold-ref:     #C9A66B;  /* reference gold: oklch(0.75 0.09 78) */
-
-  /* ── Radius tokens from reference ── */
-  --radius-sm: calc(0.75rem - 4px);
-  --radius-md: calc(0.75rem - 2px);
-  --radius-lg: 0.75rem;
-  --radius-xl: calc(0.75rem + 4px);
+  --color-tan:          #D2C3B2;  /* new — soft neutral for borders/dividers/secondary text */
 
   /* Fonts — CSS vars set by next/font in layout.tsx */
-  --font-display: var(--font-cormorant), "Playfair Display", Georgia, serif;
+  --font-display: var(--font-cormorant), Georgia, serif;
   --font-accent:  var(--font-playfair),  Georgia, serif;
-  --font-sans:    var(--font-raleway),   "Inter", system-ui, sans-serif;
+  --font-sans:    var(--font-raleway),   system-ui, sans-serif;
 
   /* Custom animations */
   --animate-marquee:        marquee-scroll 25s linear infinite;
@@ -77,23 +63,9 @@
 @keyframes slide-up    { to { opacity: 1; transform: translateY(0); } }
 @keyframes fade-in     { to { opacity: 1; } }
 
-/* Reference marquee keyframe */
-@keyframes marqueeX {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-/* Reference reveal keyframe */
-@keyframes revealUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* ── GLOBAL RESET & BASE ────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
-  border-color: var(--color-border-light);
 }
 
 html {
@@ -106,15 +78,8 @@ body {
   font-family: var(--font-sans);
   font-weight: 300;
   overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
+  /* Custom cursor active on fine-pointer (desktop) only */
   cursor: default;
-}
-
-/* heading defaults from reference */
-h1, h2, h3, h4 {
-  font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: -0.01em;
 }
 
 /* Hide default cursor on desktop when custom cursor is active */
@@ -130,18 +95,18 @@ h1, h2, h3, h4 {
 
 /* ── TEXT SELECTION ─────────────────────────────────────────── */
 ::selection {
-  background-color: var(--color-gold-ref);
-  color: var(--color-ink);
+  background-color: var(--color-gold);
+  color: var(--color-deep);
 }
 
 /* ── SCROLLBAR (desktop) ────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 6px; }
-::-webkit-scrollbar-track { background: var(--color-background); }
-::-webkit-scrollbar-thumb { background: var(--color-gold-ref); border-radius: 3px; }
+::-webkit-scrollbar-track { background: var(--color-ivory); }
+::-webkit-scrollbar-thumb { background: var(--color-gold); border-radius: 3px; }
 
 /* ── FOCUS VISIBLE ──────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--color-gold-ref);
+  outline: 2px solid var(--color-gold);
   outline-offset: 3px;
 }
 
@@ -153,135 +118,4 @@ h1, h2, h3, h4 {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* ── REFERENCE UTILITIES ─────────────────────────────────────
-   These utilities mirror the reference project's patterns.
-   They are additive and do not replace existing Tailwind classes.
-   ────────────────────────────────────────────────────────── */
-
-/* Responsive horizontal container padding (matches reference container-x) */
-.container-x {
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
-}
-@media (min-width: 768px) {
-  .container-x {
-    padding-left: 2.5rem;
-    padding-right: 2.5rem;
-  }
-}
-@media (min-width: 1280px) {
-  .container-x {
-    padding-left: 4rem;
-    padding-right: 4rem;
-  }
-}
-
-/* Scroll-triggered reveal animation (IntersectionObserver adds .reveal class) */
-.reveal {
-  opacity: 0;
-  transform: translateY(24px);
-  animation: revealUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-/* CSS marquee utility (used in reference Marquee component) */
-.marquee-css {
-  animation: marqueeX 40s linear infinite;
-}
-
-/* Reference-style rounded pill buttons */
-.btn-pill-dark {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border-radius: 9999px;
-  background-color: var(--color-ink);
-  padding: 0.875rem 1.75rem;
-  font-size: 13px;
-  font-family: var(--font-sans);
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--color-background);
-  transition: background-color 0.3s;
-}
-.btn-pill-dark:hover {
-  background-color: rgba(17, 17, 17, 0.85);
-}
-
-.btn-pill-outline {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border-radius: 9999px;
-  border: 1px solid rgba(17, 17, 17, 0.25);
-  background-color: rgba(250, 249, 246, 0.6);
-  padding: 0.875rem 1.75rem;
-  font-size: 13px;
-  font-family: var(--font-sans);
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--color-ink);
-  backdrop-filter: blur(4px);
-  transition: all 0.3s;
-}
-.btn-pill-outline:hover {
-  border-color: var(--color-ink);
-  background-color: var(--color-background);
-}
-
-/* Reference-style icon button */
-.icon-btn-ref {
-  display: grid;
-  place-items: center;
-  border-radius: 9999px;
-  padding: 0.625rem;
-  color: var(--color-ink);
-  transition: background-color 0.2s;
-}
-.icon-btn-ref:hover {
-  background-color: var(--color-secondary);
-}
-
-/* Reference-style nav link underline */
-.nav-link-ref {
-  position: relative;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--color-ink-muted);
-  transition: color 0.2s;
-}
-.nav-link-ref::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  height: 1px;
-  width: 0;
-  background-color: var(--color-gold-ref);
-  transition: width 0.3s;
-}
-.nav-link-ref:hover {
-  color: var(--color-ink);
-}
-.nav-link-ref:hover::after {
-  width: 100%;
-}
-
-/* Reference-style category card arrow circle */
-.cat-arrow {
-  display: grid;
-  height: 2.5rem;
-  width: 2.5rem;
-  place-items: center;
-  border-radius: 9999px;
-  border: 1px solid rgba(255,255,255,0.4);
-  transition: all 0.3s;
-  flex-shrink: 0;
-}
-.group:hover .cat-arrow {
-  border-color: var(--color-gold-ref);
-  background-color: var(--color-gold-ref);
-  color: var(--color-ink);
 }

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
-import { Search, Heart, ShoppingBag, Menu, X } from "lucide-react";
 
 const navLinks = [
   { name: "Collections", href: "/collections" },
@@ -14,15 +13,6 @@ const navLinks = [
   { name: "Contact", href: "/contact" },
 ];
 
-/**
- * Reference-styled Navbar:
- * - Logo left-aligned (desktop center is reference pattern; here we keep
- *   the same functional layout but match the reference's visual style)
- * - Nav links with underline-on-hover gold accent
- * - Icon buttons with rounded-full hover pill
- * - Scroll: transparent → backdrop-blur warm bg
- * - All functional cart/routing logic preserved unchanged
- */
 export default function Navbar() {
   const pathname = usePathname();
   const { cartCount, toggleCart } = useCart();
@@ -30,238 +20,209 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isHomepage = pathname === "/";
-  // Over a dark hero on homepage before scroll
+  // Over a dark hero: homepage + not yet scrolled
   const heroMode = isHomepage && !scrolled;
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 24);
+      setScrolled(window.scrollY > 50);
     };
+
+    // Run once on mount to catch SSR/hydration mismatch
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Close mobile menu when route changes
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
 
+
   return (
     <>
+      {/* text-shadow utility injected inline so Tailwind's JIT doesn't need a plugin */}
       <style>{`
-        .nav-link-underline {
-          position: relative;
-        }
-        .nav-link-underline::after {
-          content: '';
-          position: absolute;
-          bottom: -4px;
-          left: 0;
-          height: 1px;
-          width: 0;
-          background-color: var(--color-gold-ref);
-          transition: width 0.3s ease;
-        }
-        .nav-link-underline:hover::after,
-        .nav-link-underline.active::after {
-          width: 100%;
-        }
+        .nav-text-shadow { text-shadow: 0 1px 3px rgba(26,10,0,0.55), 0 0 8px rgba(26,10,0,0.35); }
+        .nav-icon-shadow { filter: drop-shadow(0 1px 2px rgba(26,10,0,0.6)); }
       `}</style>
 
-      <header
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
+      <nav
+        className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ease-out border-b ${
           scrolled
-            ? "bg-ivory/90 backdrop-blur-md border-b py-3 shadow-sm"
-            : heroMode
-            ? "bg-transparent py-6"
-            : "bg-ivory/95 backdrop-blur-sm border-b py-3"
+            ? "bg-ivory/90 backdrop-blur-md py-4 border-gold/15 shadow-sm"
+            : "bg-transparent py-7 border-gold/0"
         }`}
-        style={{ borderColor: scrolled || !heroMode ? "var(--color-border-light)" : "transparent" }}
       >
-        <div className="container-x mx-auto flex h-14 max-w-[1400px] items-center justify-between">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="font-display text-2xl tracking-[0.22em] transition-colors duration-300 hover:opacity-80"
-            style={{ color: heroMode ? "var(--color-ivory)" : "var(--color-ink)" }}
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 flex items-center justify-between">
+          {/* Mobile Hamburger Button */}
+          <button type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className={`flex md:hidden flex-col gap-1.5 justify-center items-center w-6 h-6 transition-colors duration-300 focus:outline-none cursor-pointer ${
+              heroMode
+                ? "text-ivory hover:text-gold-light nav-icon-shadow"
+                : "text-charcoal hover:text-gold"
+            }`}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
-            SAKHY
-          </Link>
+            <span
+              className={`w-5 h-[1px] bg-current transition-transform duration-300 ${
+                mobileMenuOpen ? "rotate-45 translate-y-[7px]" : ""
+              }`}
+            />
+            <span
+              className={`w-5 h-[1px] bg-current transition-opacity duration-300 ${
+                mobileMenuOpen ? "opacity-0" : ""
+              }`}
+            />
+            <span
+              className={`w-5 h-[1px] bg-current transition-transform duration-300 ${
+                mobileMenuOpen ? "-rotate-45 -translate-y-[7px]" : ""
+              }`}
+            />
+          </button>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden items-center gap-8 md:flex">
+          {/* Nav Links (Desktop) */}
+          <div className={`hidden md:flex items-center gap-8 text-[11px] font-sans uppercase tracking-[0.25em] transition-colors duration-500 ${
+            heroMode ? "text-ivory/90 nav-text-shadow" : "text-charcoal/80"
+          }`}>
             {navLinks.slice(0, 3).map((link) => {
               const active = pathname === link.href;
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`nav-link-underline text-[12px] uppercase tracking-[0.2em] transition-colors duration-300 ${
-                    active ? "active" : ""
+                  className={`hover:text-gold transition-colors duration-300 relative py-1 ${
+                    active ? "text-gold font-normal" : "font-light"
                   }`}
-                  style={{
-                    color: heroMode
-                      ? active
-                        ? "var(--color-gold-ref)"
-                        : "rgba(245,239,233,0.85)"
-                      : active
-                      ? "var(--color-gold-ref)"
-                      : "var(--color-ink-muted)",
-                  }}
                 >
                   {link.name}
+                  {active && (
+                    <span className="absolute bottom-0 left-0 w-full h-[1px] bg-gold" />
+                  )}
                 </Link>
               );
             })}
-          </nav>
+          </div>
 
-          {/* Desktop Right: remaining links + action icons */}
-          <div className="flex items-center gap-2 md:gap-4">
-            <nav className="hidden items-center gap-8 md:flex">
+          {/* Logo (Centered) */}
+          <Link
+            href="/"
+            className={`font-display text-2xl sm:text-3xl font-light tracking-[0.3em] transition-colors duration-500 transform hover:scale-[1.01] hover:text-gold ${
+              heroMode ? "text-ivory nav-text-shadow" : "text-charcoal"
+            }`}
+          >
+            SAKHY
+          </Link>
+
+          {/* Nav Links + Actions (Desktop Right) */}
+          <div className="flex items-center gap-6 sm:gap-8">
+            <div className={`hidden md:flex items-center gap-8 text-[11px] font-sans uppercase tracking-[0.25em] transition-colors duration-500 ${
+              heroMode ? "text-ivory/90 nav-text-shadow" : "text-charcoal/80"
+            }`}>
               {navLinks.slice(3).map((link) => {
                 const active = pathname === link.href;
                 return (
                   <Link
                     key={link.name}
                     href={link.href}
-                    className={`nav-link-underline text-[12px] uppercase tracking-[0.2em] transition-colors duration-300 ${
-                      active ? "active" : ""
+                    className={`hover:text-gold transition-colors duration-300 relative py-1 ${
+                      active ? "text-gold font-normal" : "font-light"
                     }`}
-                    style={{
-                      color: heroMode
-                        ? active
-                          ? "var(--color-gold-ref)"
-                          : "rgba(245,239,233,0.85)"
-                        : active
-                        ? "var(--color-gold-ref)"
-                        : "var(--color-ink-muted)",
-                    }}
                   >
                     {link.name}
+                    {active && (
+                      <span className="absolute bottom-0 left-0 w-full h-[1px] bg-gold" />
+                    )}
                   </Link>
                 );
               })}
-            </nav>
-
-            {/* Icon buttons — reference style: rounded-full, hover bg-secondary */}
-            <div className="flex items-center gap-0.5 md:gap-1">
-              <Link
-                href="/collections"
-                aria-label="Search"
-                className="rounded-full p-2.5 transition-colors duration-200"
-                style={{
-                  color: heroMode ? "rgba(245,239,233,0.9)" : "var(--color-ink)",
-                }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLElement).style.backgroundColor = "rgba(245,239,233,0.12)")
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLElement).style.backgroundColor = "transparent")
-                }
-              >
-                <Search className="h-[18px] w-[18px]" />
-              </Link>
-
-              <button
-                aria-label="Wishlist"
-                className="rounded-full p-2.5 transition-colors duration-200"
-                style={{
-                  color: heroMode ? "rgba(245,239,233,0.9)" : "var(--color-ink)",
-                  backgroundColor: "transparent",
-                }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLElement).style.backgroundColor = heroMode ? "rgba(245,239,233,0.12)" : "var(--color-secondary)")
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLElement).style.backgroundColor = "transparent")
-                }
-              >
-                <Heart className="h-[18px] w-[18px]" />
-              </button>
-
-              {/* Cart Button — reference style with count badge */}
-              <button
-                type="button"
-                onClick={toggleCart}
-                aria-label="Shopping cart"
-                className="rounded-full p-2.5 transition-colors duration-200 relative"
-                style={{
-                  color: heroMode ? "rgba(245,239,233,0.9)" : "var(--color-ink)",
-                  backgroundColor: "transparent",
-                }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLElement).style.backgroundColor = heroMode ? "rgba(245,239,233,0.12)" : "var(--color-secondary)")
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLElement).style.backgroundColor = "transparent")
-                }
-              >
-                <ShoppingBag className="h-[18px] w-[18px]" />
-                {cartCount > 0 && (
-                  <span
-                    className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-medium"
-                    style={{
-                      backgroundColor: "var(--color-gold-ref)",
-                      color: "var(--color-ink)",
-                    }}
-                  >
-                    {cartCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Mobile hamburger */}
-              <button
-                type="button"
-                className="ml-1 rounded-full p-2.5 md:hidden transition-colors duration-200"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-                style={{
-                  color: heroMode ? "rgba(245,239,233,0.9)" : "var(--color-ink)",
-                  backgroundColor: "transparent",
-                }}
-              >
-                {mobileMenuOpen ? (
-                  <X className="h-5 w-5" />
-                ) : (
-                  <Menu className="h-5 w-5" />
-                )}
-              </button>
             </div>
+
+            {/* Cart Button */}
+            <button type="button"
+              onClick={toggleCart}
+              className={`flex items-center gap-2 transition-colors duration-300 focus:outline-none relative group cursor-pointer ${
+                heroMode
+                  ? "text-ivory hover:text-gold nav-icon-shadow"
+                  : "text-charcoal hover:text-gold"
+              }`}
+              aria-label="Shopping cart"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.2}
+                stroke="currentColor"
+                className="w-[19px] h-[19px]"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+                />
+              </svg>
+              <span className="text-[10px] tracking-wider font-sans font-light uppercase hidden sm:inline-block">
+                Bag
+              </span>
+
+              {cartCount > 0 && (
+                <span className="absolute -top-2.5 -right-2 bg-crimson text-ivory text-[9px] w-4.5 h-4.5 rounded-full flex items-center justify-center font-sans font-medium scale-95 animate-fade-in border border-ivory">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Drawer Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-45 bg-deep/45 backdrop-blur-sm md:hidden animate-fade-in" />
+      )}
+
+      {/* Mobile Menu Panel */}
+      <div
+        className={`fixed top-0 left-0 w-4/5 max-w-sm h-screen bg-ivory z-50 border-r border-gold/15 p-10 flex flex-col justify-between transition-transform duration-500 ease-out md:hidden ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex flex-col gap-12 mt-12">
+          <Link
+            href="/"
+            className="font-display text-2xl tracking-[0.25em] text-charcoal border-b border-gold/10 pb-4 block"
+          >
+            SAKHY
+          </Link>
+          <div className="flex flex-col gap-6 text-sm font-sans uppercase tracking-[0.25em] text-charcoal">
+            {navLinks.map((link) => {
+              const active = pathname === link.href;
+              return (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className={`hover:text-gold transition-colors duration-300 py-1 ${
+                    active ? "text-gold font-normal" : "font-light text-charcoal/70"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
           </div>
         </div>
 
-        {/* Mobile drawer — reference style: full-width white panel */}
-        {mobileMenuOpen && (
-          <div
-            className="border-t md:hidden"
-            style={{
-              backgroundColor: "var(--color-background)",
-              borderColor: "var(--color-border-light)",
-            }}
-          >
-            <div className="container-x mx-auto flex flex-col py-4">
-              {navLinks.map((link) => {
-                const active = pathname === link.href;
-                return (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="py-3.5 text-[12px] uppercase tracking-[0.2em] transition-colors duration-200 border-b"
-                    style={{
-                      color: active ? "var(--color-gold-ref)" : "var(--color-ink-muted)",
-                      borderColor: "var(--color-border-light)",
-                    }}
-                  >
-                    {link.name}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </header>
+        <div className="border-t border-gold/10 pt-6">
+          <span className="text-[9px] font-sans font-light tracking-[0.3em] uppercase text-muted block mb-2">
+            Heritage-Saree Brand
+          </span>
+          <span className="text-[9px] font-sans font-light tracking-[0.2em] text-muted/65 block">
+            © 2026 Sakhy. All rights reserved.
+          </span>
+        </div>
+      </div>
     </>
   );
 }

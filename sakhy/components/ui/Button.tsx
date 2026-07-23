@@ -8,30 +8,21 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   href?: string;
 }
 
-/**
- * Button — reference-styled with rounded-full pill shape.
- * - primary: dark (ink) background, ivory text — matches reference "Shop Collection" button
- * - outline: bordered pill, transparent bg — matches reference "Explore New Arrivals" button
- * - ghost: transparent, no border
- * - crimson: for destructive/alert actions
- * All functional props (disabled, loading spinner, href) are preserved.
- */
-
 const sizes = {
-  sm:  "px-4 py-2 text-[10px] tracking-wider",
-  md:  "px-6 py-3.5 text-[12px]",
-  lg:  "px-7 py-3.5 text-[13px]",
+  sm: "px-4 py-2 text-[10px] tracking-wider",
+  md: "px-6 py-3.5",
+  lg: "px-8 py-4 text-sm tracking-[0.25em]",
 };
 
 const variants = {
   primary:
-    "text-background hover:opacity-85 border border-transparent active:opacity-100",
+    "bg-gold text-deep hover:bg-gold-light border border-transparent active:bg-gold",
   outline:
-    "bg-transparent border hover:opacity-80 active:opacity-100",
+    "bg-transparent border border-gold text-gold hover:bg-gold/10 active:bg-gold/20",
   ghost:
-    "bg-transparent text-inherit hover:opacity-70 active:opacity-100",
+    "bg-transparent text-gold hover:bg-gold/5 active:bg-gold/10",
   crimson:
-    "border border-transparent hover:opacity-85 active:opacity-100",
+    "bg-crimson text-ivory hover:bg-red-900 border border-transparent active:bg-crimson",
 };
 
 export default function Button({
@@ -42,48 +33,10 @@ export default function Button({
   href,
   className = "",
   disabled,
-  style,
   ...props
 }: ButtonProps) {
   const baseStyles =
-    "inline-flex items-center justify-center rounded-full font-sans uppercase tracking-[0.18em] transition-all duration-300 focus:outline-none focus:ring-1 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
-
-  // Build inline styles to match reference color system
-  const getStyle = (): React.CSSProperties => {
-    switch (variant) {
-      case "primary":
-        return {
-          backgroundColor: "var(--color-ink)",
-          color: "var(--color-background)",
-          borderColor: "transparent",
-          ...style,
-        };
-      case "outline":
-        return {
-          backgroundColor: "transparent",
-          color: "var(--color-ink)",
-          borderColor: "rgba(17,17,17,0.25)",
-          ...style,
-        };
-      case "ghost":
-        return {
-          backgroundColor: "transparent",
-          color: "var(--color-ink)",
-          borderColor: "transparent",
-          ...style,
-        };
-      case "crimson":
-        return {
-          backgroundColor: "var(--color-crimson)",
-          color: "var(--color-ivory)",
-          borderColor: "transparent",
-          ...style,
-        };
-      default:
-        return style || {};
-    }
-  };
-
+    "inline-flex items-center justify-center font-sans uppercase tracking-[0.2em] text-xs transition-all duration-300 focus:outline-none focus:ring-1 focus:ring-gold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
   const classes = `${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`;
 
   const content = (
@@ -115,19 +68,14 @@ export default function Button({
 
   if (href) {
     return (
-      <Link href={href} className={classes} style={getStyle()}>
+      <Link href={href} className={classes}>
         {content}
       </Link>
     );
   }
 
   return (
-    <button
-      disabled={disabled || loading}
-      className={classes}
-      style={getStyle()}
-      {...props}
-    >
+    <button disabled={disabled || loading} className={classes} {...props}>
       {content}
     </button>
   );

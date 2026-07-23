@@ -11,7 +11,7 @@ export default function StorefrontLayout({
   return (
     <CartProvider>
       <PageLoader />
-      <div className="flex flex-col min-h-screen text-charcoal relative" style={{ backgroundColor: "var(--color-background)" }}>
+      <div className="flex flex-col min-h-screen bg-ivory text-charcoal relative">
         <Navbar />
         {/* Main page content area */}
         <main className="flex-grow">

@@ -24,190 +24,79 @@ interface ProductCardProps {
   className?: string;
 }
 
-/**
- * ProductCard — reference-styled with:
- * - rounded-xl image container (reference uses rounded-xl throughout)
- * - Warm background placeholder swatch
- * - Heart wishlist button top-right
- * - Add to Cart + Quick View overlay on hover (matches reference collection grid exactly)
- * - Star rating display
- * - Product name in display font below image
- * - All links preserved (href to /products/[slug])
- */
 export default function ProductCard({ product, className = "" }: ProductCardProps) {
+  // Use first variant's details if available
   const variant = product.variants[0];
   const price = variant ? variant.price : product.basePrice;
   const image = variant?.images?.[0];
 
   return (
-    <article className={`group ${className}`}>
-      {/* Image Container — reference rounded-xl with aspect-[4/5] */}
-      <div
-        className="relative overflow-hidden rounded-xl aspect-[4/5]"
-        style={{ backgroundColor: "var(--color-secondary)" }}
-      >
+    <Link
+      href={`/products/${product.slug}`}
+      className={`group flex flex-col h-full bg-silk/15 border border-gold/10 p-5 transition-all duration-500 hover:border-gold/30 hover:shadow-[0_12px_30px_-10px_rgba(201,168,76,0.12)] ${className}`}
+    >
+      {/* Aspect Ratio Container for Saree Thumbnail */}
+      <div className="relative aspect-[2/3] w-full bg-silk/30 overflow-hidden mb-6 flex items-center justify-center border border-gold/5">
         {image ? (
-          <Image
-            src={image}
-            alt={`${product.name} - ${variant?.color || "Default"}`}
-            fill
-            className="h-full w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.04]"
-            sizes="(max-width: 768px) 50vw, 25vw"
-          />
+          <Image src={image} alt={`${product.name} - ${variant?.color || "Default"}`} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-105" sizes="(max-width: 768px) 100vw, 33vw" />
         ) : (
-          /* Reference-aligned warm placeholder */
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center select-none"
-            style={{
-              background: "linear-gradient(135deg, rgba(232,220,200,0.4) 0%, rgba(232,220,200,0.8) 100%)",
-            }}
-          >
-            <div
-              className="absolute inset-4 border pointer-events-none"
-              style={{ borderColor: "rgba(201,166,107,0.2)" }}
-            />
-            <div
-              className="absolute inset-0 opacity-10"
-              style={{
-                backgroundImage: "radial-gradient(circle, var(--color-gold-ref) 1px, transparent 1px)",
-                backgroundSize: "10px 10px",
-              }}
-            />
-            <span
-              className="font-display text-sm font-light tracking-[0.25em] uppercase max-w-[80%] line-clamp-2"
-              style={{ color: "var(--color-charcoal)", opacity: 0.5 }}
-            >
+          /* Luxury Editorial Swatch Placeholder when image is missing */
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center select-none bg-gradient-to-br from-silk/30 to-silk/70">
+            {/* Fine line border */}
+            <div className="absolute inset-4 border border-gold/10 pointer-events-none" />
+            <div className="absolute inset-5 border border-gold/5 pointer-events-none" />
+
+            {/* Micro weave pattern */}
+            <div className="absolute inset-0 opacity-15 bg-[radial-gradient(circle_at_center,_var(--color-gold)_1px,_transparent_1px)] bg-[size:10px_10px]" />
+
+            {/* Swatch detail */}
+            <span className="font-accent italic text-[11px] text-gold tracking-widest uppercase mb-3 block">
               {product.fabricType}
             </span>
+            <span className="font-display text-sm text-charcoal/40 font-light tracking-[0.2em] uppercase max-w-[80%] line-clamp-2">
+              {product.name}
+            </span>
+            <div className="w-6 h-[1px] bg-gold/30 mt-4" />
           </div>
         )}
 
-        {/* Occasion Badge — top left */}
-        {product.occasion && (
-          <span
-            className="absolute left-3 top-3 rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.18em] backdrop-blur"
-            style={{
-              backgroundColor: "rgba(250,249,246,0.95)",
-              color: "var(--color-ink)",
-            }}
-          >
-            {product.occasion}
+        {/* Dynamic Badges */}
+        <div className="absolute top-4 left-4 flex flex-col gap-2">
+          {product.occasion && (
+            <span className="bg-deep/95 backdrop-blur-sm text-ivory text-[9px] font-sans font-light tracking-[0.25em] uppercase px-3 py-1.5 border border-gold/20 shadow-sm">
+              {product.occasion}
+            </span>
+          )}
+          {price > 6000000 && (
+            <span className="bg-crimson/95 backdrop-blur-sm text-ivory text-[9px] font-sans font-light tracking-[0.25em] uppercase px-3 py-1.5 border border-gold/15 shadow-sm">
+              Heirloom
+            </span>
+          )}
+        </div>
+
+        {/* Quick View Button overlay on hover */}
+        <div className="absolute inset-0 bg-deep/40 backdrop-blur-[2px] opacity-0 transition-opacity duration-500 flex items-center justify-center group-hover:opacity-100">
+          <span className="bg-ivory text-deep font-sans text-[10px] tracking-[0.3em] uppercase py-3.5 px-6 border border-gold/30 shadow-lg transform translate-y-4 transition-transform duration-500 ease-out group-hover:translate-y-0">
+            View Details
+          </span>
+        </div>
+      </div>
+
+      {/* Info */}
+      <span className="text-[10px] text-gold tracking-[0.3em] uppercase font-sans font-light mb-1.5 block">
+        {product.fabricType}
+      </span>
+      <h3 className="font-display text-[17px] text-charcoal font-light leading-snug mb-3 group-hover:text-gold transition-colors duration-300">
+        {product.name}
+      </h3>
+      <div className="mt-auto pt-2 border-t border-gold/5 flex justify-between items-center">
+        <PriceTag pricePaise={price} />
+        {variant?.color && (
+          <span className="text-[10px] font-sans text-muted tracking-widest uppercase">
+            {variant.color}
           </span>
         )}
-
-        {/* Wishlist button — top right (reference pattern) */}
-        <Link
-          href={`/products/${product.slug}`}
-          aria-label="Wishlist"
-          className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full backdrop-blur transition-colors duration-300"
-          style={{
-            backgroundColor: "rgba(250,249,246,0.95)",
-            color: "var(--color-ink)",
-          }}
-          onMouseEnter={(e) =>
-            ((e.currentTarget as HTMLElement).style.color = "var(--color-gold-ref)")
-          }
-          onMouseLeave={(e) =>
-            ((e.currentTarget as HTMLElement).style.color = "var(--color-ink)")
-          }
-          onClick={(e) => e.preventDefault()}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.5}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-            />
-          </svg>
-        </Link>
-
-        {/* Hover overlay: Add to Cart + Quick View (reference pattern) */}
-        <div className="pointer-events-none absolute inset-x-3 bottom-3 translate-y-2 opacity-0 transition-all duration-500 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
-          <div className="flex gap-2">
-            <Link
-              href={`/products/${product.slug}`}
-              className="flex-1 rounded-full py-2.5 text-[11px] uppercase tracking-[0.18em] text-center transition-colors duration-200"
-              style={{
-                backgroundColor: "var(--color-ink)",
-                color: "var(--color-background)",
-              }}
-            >
-              View Details
-            </Link>
-            <Link
-              href={`/products/${product.slug}`}
-              aria-label="Quick view"
-              className="grid h-10 w-10 place-items-center rounded-full transition-colors duration-200"
-              style={{
-                backgroundColor: "var(--color-background)",
-                color: "var(--color-ink)",
-              }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor = "var(--color-gold-ref)")
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor = "var(--color-background)")
-              }
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </Link>
-          </div>
-        </div>
       </div>
-
-      {/* Product info below image — reference pattern */}
-      <div className="mt-4 space-y-1.5">
-        {/* Stars (reference shows 5-star rating) */}
-        <div className="flex items-center gap-0.5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <svg
-              key={i}
-              className="h-3 w-3"
-              fill={i < 4 ? "var(--color-gold-ref)" : "none"}
-              stroke="var(--color-gold-ref)"
-              strokeWidth={1}
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-          ))}
-        </div>
-
-        <h3
-          className="font-display text-lg leading-snug"
-          style={{ color: "var(--color-ink)" }}
-        >
-          {product.name}
-        </h3>
-        <p className="text-sm" style={{ color: "var(--color-ink-muted)" }}>
-          <PriceTag pricePaise={price} />
-        </p>
-      </div>
-    </article>
+    </Link>
   );
 }

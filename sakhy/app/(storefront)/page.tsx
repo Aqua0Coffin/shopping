@@ -8,54 +8,35 @@ import TestimonialCarousel from "@/components/motion/TestimonialCarousel";
 import SectionHeading from "@/components/ui/SectionHeading";
 import ProductCard from "@/components/ui/ProductCard";
 import Button from "@/components/ui/Button";
-import HomeHeroSection from "@/components/storefront/HomeHeroSection";
 
-// Revalidate home page every 60 seconds
+// Revalidate home page every 60 seconds to reflect product/inventory/testimonial updates
 export const revalidate = 60;
 
-const processSteps = [
-  {
-    num: "01",
-    title: "Thread Selection",
-    desc: "Pure mulberry silk threads are tested for tensile strength and hand-dyed in organic vats.",
-  },
-  {
-    num: "02",
-    title: "Zari Verification",
-    desc: "Every inch of gold and silver zari thread is authenticated for metal purity before warping.",
-  },
-  {
-    num: "03",
-    title: "Hand Looming",
-    desc: "Two master weavers synchronize hand and foot movements on traditional wooden pit looms.",
-  },
-  {
-    num: "04",
-    title: "The Blessing",
-    desc: "Each completed saree is steam-pressed and blessed by the artisan community before cataloging.",
-  },
-];
-
-const values = [
-  {
-    emoji: "✦",
-    title: "Handcrafted Quality",
-    body: "Every drape is finished by master weavers whose craft is passed down through generations.",
-  },
-  {
-    emoji: "❧",
-    title: "Authentic Fabrics",
-    body: "Traceable silks, pure cottons and hand-loomed linens sourced from India's finest looms.",
-  },
-  {
-    emoji: "◎",
-    title: "Complimentary Delivery",
-    body: "Free shipping across India, discreet packaging and easy returns within 14 days.",
-  },
-];
+  const processSteps = [
+    {
+      num: "01",
+      title: "Thread Selection",
+      desc: "Pure mulberry silk threads are tested for tensile strength and hand-dyed in organic vats.",
+    },
+    {
+      num: "02",
+      title: "Zari Verification",
+      desc: "Every inch of gold and silver zari thread is authenticated for metal purity before warping.",
+    },
+    {
+      num: "03",
+      title: "Hand Looming",
+      desc: "Two master weavers synchronize hand and foot movements on traditional wooden pit looms.",
+    },
+    {
+      num: "04",
+      title: "The Blessing",
+      desc: "Each completed saree is steam-pressed and blessed by the artisan community before cataloging.",
+    },
+  ];
 
 export default async function HomePage() {
-  // Fetch dynamic content — same queries as before, fully preserved
+  // Fetch dynamic content — settings in parallel with product/testimonial data
   const [categories, featuredProducts, weaveTypes, dbTestimonials, siteSettings] =
     await Promise.all([
       prisma.category.findMany({
@@ -69,7 +50,7 @@ export default async function HomePage() {
       }),
       prisma.product.findMany({
         where: { status: "published" },
-        take: 8,
+        take: 4,
         orderBy: { createdAt: "desc" },
         include: {
           variants: {
@@ -89,10 +70,10 @@ export default async function HomePage() {
       getSiteSettings(),
     ]);
 
-  const weavesList =
-    weaveTypes.length > 0
-      ? weaveTypes.map((w) => w.fabricType)
-      : ["Handloom Silk", "Pure Cotton", "Zari Weaves", "Chikankari", "Kanjivaram", "Banarasi", "Organza", "Chanderi"];
+  // Fallback items in case of empty records
+  const weavesList = weaveTypes.length > 0
+    ? weaveTypes.map((w) => w.fabricType)
+    : ["Kanjivaram Silk", "Banarasi Brocade", "Chanderi Cotton", "Paithani Weave"];
 
   const testimonials = dbTestimonials.map((t) => ({
     id: t.id,
@@ -102,8 +83,11 @@ export default async function HomePage() {
     location: t.location,
   }));
 
-  // Hero copy from DB — preserved exactly as before
+  // Visual/Motion process steps from index.html
+
+  // Hero copy from DB (admin-editable) — falls back to defaults if not yet configured
   const heroSupertitle = siteSettings.hero_supertitle;
+  // Split headline on " & " to preserve the italic-gold "& X" visual treatment
   const headlineParts = siteSettings.hero_headline.split(" & ");
   const headlineMain = headlineParts[0] ?? siteSettings.hero_headline;
   const headlineAccent = headlineParts.length > 1 ? headlineParts.slice(1).join(" & ") : null;
@@ -112,361 +96,147 @@ export default async function HomePage() {
   const ctaSecondary = siteSettings.hero_cta_secondary || "Our Heritage";
 
   return (
-    <div style={{ backgroundColor: "var(--color-background)" }} className="overflow-hidden">
+    <div className="bg-ivory overflow-hidden">
+      {/* ── SECTION 1: HERO ── */}
+      <header className="relative h-screen min-h-[650px] flex items-center bg-deep text-ivory">
+        {/* Background Gradients */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-charcoal via-deep to-deep" />
+        {/* Fine gold lines overlay */}
+        <div className="absolute inset-0 opacity-5 bg-[linear-gradient(45deg,var(--color-gold)_1px,transparent_1px),_linear-gradient(-45deg,var(--color-gold)_1px,transparent_1px)] bg-[size:40px_40px]" />
+        
+        {/* Ambient Glows */}
+        <div className="absolute top-[20%] right-[10%] w-[450px] h-[450px] rounded-full bg-gold/10 blur-[120px] animate-glow-pulse" />
+        <div className="absolute bottom-[10%] left-[5%] w-[350px] h-[350px] rounded-full bg-crimson/5 blur-[90px]" />
 
-      {/* ── SECTION 1: HERO — reference-style image with parallax ── */}
-      {/*
-        HomeHeroSection is a client component that handles:
-        - scroll parallax
-        - scroll-triggered reveal animations
-        All DB-fetched hero copy is passed as props (server → client boundary)
-      */}
-      <HomeHeroSection
-        heroSupertitle={heroSupertitle}
-        headlineMain={headlineMain}
-        headlineAccent={headlineAccent}
-        heroSubheadline={heroSubheadline}
-        ctaPrimary={ctaPrimary}
-        ctaSecondary={ctaSecondary}
-      />
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 w-full py-20 flex flex-col justify-center">
+          <div className="max-w-3xl">
+            <ScrollReveal direction="up" delay={0.2}>
+              <span className="text-gold text-[10px] sm:text-xs tracking-[0.5em] uppercase mb-6 block font-sans font-light">
+                {heroSupertitle}
+              </span>
+            </ScrollReveal>
 
-      {/* ── SECTION 2: MARQUEE STRIP — reference light style ── */}
-      <div
-        className="border-y overflow-hidden py-5"
-        style={{
-          backgroundColor: "var(--color-background)",
-          borderColor: "var(--color-border-light)",
-        }}
-      >
-        <Marquee items={weavesList} speed={40} separator="•" theme="light" className="" />
-      </div>
+            <ScrollReveal direction="up" delay={0.4}>
+              <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl font-light leading-[1.1] text-ivory mb-8">
+                {headlineAccent ? (
+                  <>
+                    {headlineMain} &{" "}<br />
+                    <em className="text-gold not-italic font-accent font-normal italic pr-2">
+                      {headlineAccent}
+                    </em>
+                  </>
+                ) : (
+                  headlineMain
+                )}
+              </h1>
+            </ScrollReveal>
 
-      {/* ── SECTION 3: CATEGORIES GRID — reference rounded-xl cards ── */}
-      <section
-        id="categories"
-        className="container-x mx-auto max-w-[1400px] py-24 md:py-32"
-      >
-        <div className="mb-14 flex items-end justify-between gap-8">
-          <div>
-            <ScrollReveal direction="up">
-              <p
-                className="mb-4 flex items-center gap-3 text-[11px] uppercase tracking-[0.32em]"
-                style={{ color: "var(--color-ink-muted)" }}
-              >
-                <span
-                  className="h-px w-8 inline-block"
-                  style={{ backgroundColor: "var(--color-gold-ref)" }}
-                />
-                Curated by Fabric
+            <ScrollReveal direction="up" delay={0.6}>
+              <p className="text-sm tracking-wide text-ivory/60 leading-relaxed max-w-md mb-12 font-sans font-light">
+                {heroSubheadline}
               </p>
             </ScrollReveal>
-            <ScrollReveal direction="up" delay={0.1}>
-              <h2
-                className="max-w-xl font-display text-4xl leading-tight md:text-5xl font-light"
-                style={{ color: "var(--color-ink)" }}
-              >
-                A wardrobe for every quiet ceremony.
-              </h2>
+
+            <ScrollReveal direction="up" delay={0.8}>
+              <div className="flex flex-wrap gap-4 sm:gap-6">
+                <Button variant="primary" size="lg" href="/collections">
+                  {ctaPrimary}
+                </Button>
+                <Button variant="outline" size="lg" href="/heritage" className="!text-ivory !border-ivory/30 hover:!border-gold hover:!text-gold">
+                  {ctaSecondary}
+                </Button>
+              </div>
             </ScrollReveal>
           </div>
-          <Link
-            href="/collections"
-            className="hidden text-[12px] uppercase tracking-[0.18em] transition-colors md:inline-flex md:items-center md:gap-2"
-            style={{ color: "var(--color-ink-muted)" }}
-            onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLElement).style.color = "var(--color-ink)")
-            }
-            onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLElement).style.color = "var(--color-ink-muted)")
-            }
-          >
-            View all
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
-          </Link>
         </div>
+      </header>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {categories.length > 0 ? (
-            categories.map((category, idx) => {
-              const firstProduct = category.products[0];
-              const image = firstProduct?.variants[0]?.images?.[0];
+      {/* ── SECTION 2: INFINITE MARQUEE STRIP ── */}
+      <section className="bg-deep py-4.5 border-y border-gold/15 relative z-20">
+        <Marquee items={weavesList} speed={28} />
+      </section>
 
-              return (
-                <ScrollReveal key={category.id} direction="up" delay={idx * 0.06}>
-                  <Link
-                    href={`/collections/${category.slug}`}
-                    className="group relative block overflow-hidden rounded-xl aspect-[4/5]"
-                    style={{ backgroundColor: "var(--color-secondary)" }}
-                  >
-                    {image ? (
-                      <Image
-                        src={image}
-                        alt={category.name}
-                        fill
-                        className="h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-105"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      />
-                    ) : (
-                      <div
-                        className="absolute inset-0 flex items-center justify-center"
-                        style={{
-                          background: "linear-gradient(135deg, rgba(232,220,200,0.3) 0%, rgba(232,220,200,0.7) 100%)",
-                        }}
-                      >
-                        <div
-                          className="absolute inset-4 border pointer-events-none"
-                          style={{ borderColor: "rgba(201,166,107,0.1)" }}
-                        />
-                        <div
-                          className="absolute inset-0 opacity-5"
-                          style={{
-                            backgroundImage: "radial-gradient(circle, var(--color-gold-ref) 1px, transparent 1px)",
-                            backgroundSize: "12px 12px",
-                          }}
-                        />
-                      </div>
-                    )}
+      {/* ── SECTION 3: COLLECTIONS GRID ── */}
+      <section id="collections" className="py-24 px-6 sm:px-8 max-w-7xl mx-auto">
+        <ScrollReveal direction="up">
+          <SectionHeading tag="Heritage Collections" title="Woven for *Memorable Moments*" />
+        </ScrollReveal>
 
-                    {/* Gradient overlay — from-ink/55 matching reference */}
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        background: "linear-gradient(to top, rgba(17,17,17,0.55) 0%, transparent 60%)",
-                      }}
-                    />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {categories.map((category, idx) => {
+            const firstProduct = category.products[0];
+            const image = firstProduct?.variants[0]?.images?.[0];
 
-                    {/* Text + arrow */}
-                    <div className="absolute inset-x-0 bottom-0 p-6 text-white">
-                      <div className="flex items-end justify-between gap-4">
-                        <div>
-                          <p className="text-[10px] uppercase tracking-[0.28em] opacity-80">
-                            {category.products.length} pieces
-                          </p>
-                          <h3 className="mt-1 font-display text-2xl text-white font-light">
-                            {category.name}
-                          </h3>
-                        </div>
-                        {/* Arrow circle — reference cat-arrow style */}
-                        <span
-                          className="grid h-10 w-10 place-items-center rounded-full border transition-all duration-300 flex-shrink-0"
-                          style={{
-                            borderColor: "rgba(255,255,255,0.4)",
-                            color: "white",
-                          }}
-                        >
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                          </svg>
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                </ScrollReveal>
-              );
-            })
-          ) : (
-            // Fallback placeholder categories when DB is empty
-            [
-              { name: "Silk Sarees", count: 42 },
-              { name: "Cotton Sarees", count: 36 },
-              { name: "Linen Sarees", count: 24 },
-              { name: "Organza Sarees", count: 18 },
-              { name: "Banarasi Sarees", count: 30 },
-              { name: "Party Wear", count: 27 },
-            ].map((cat, idx) => (
-              <ScrollReveal key={cat.name} direction="up" delay={idx * 0.06}>
+            return (
+              <ScrollReveal key={category.id} direction="up" delay={idx * 0.15}>
                 <Link
-                  href="/collections"
-                  className="group relative block overflow-hidden rounded-xl aspect-[4/5]"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(232,220,200,0.4) 0%, rgba(176,141,94,0.25) 100%)",
-                  }}
+                  href={`/collections/${category.slug}`}
+                  className="group relative flex flex-col justify-end aspect-[4/5] bg-silk/40 overflow-hidden border border-gold/10 hover:border-gold/30 transition-all duration-500 hover:shadow-[0_12px_24px_-10px_rgba(201,168,76,0.1)]"
                 >
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background: "linear-gradient(to top, rgba(17,17,17,0.55) 0%, transparent 60%)",
-                    }}
-                  />
-                  <div className="absolute inset-x-0 bottom-0 p-6 text-white">
-                    <div className="flex items-end justify-between gap-4">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-[0.28em] opacity-80">{cat.count} pieces</p>
-                        <h3 className="mt-1 font-display text-2xl font-light">{cat.name}</h3>
-                      </div>
-                      <span
-                        className="grid h-10 w-10 place-items-center rounded-full border flex-shrink-0"
-                        style={{ borderColor: "rgba(255,255,255,0.4)" }}
-                      >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                        </svg>
-                      </span>
+                  {image ? (
+                    <Image src={image} alt={category.name} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-105" sizes="(max-width: 768px) 100vw, 33vw" />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-tr from-silk/30 to-silk/70 flex items-center justify-center">
+                      <div className="absolute inset-4 border border-gold/5" />
+                      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--color-gold)_1px,_transparent_1px)] bg-[size:12px_12px]" />
                     </div>
+                  )}
+
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-deep/90 via-deep/30 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-500" />
+
+                  {/* Text Container */}
+                  <div className="relative z-10 p-8 flex flex-col gap-2">
+                    <span className="text-gold text-[9px] tracking-[0.3em] uppercase font-sans font-light">
+                      View Collection
+                    </span>
+                    <h3 className="font-display text-2xl text-ivory font-light group-hover:text-gold-light transition-colors duration-300">
+                      {category.name}
+                    </h3>
+                    <p className="text-ivory/50 text-[11px] font-sans font-light tracking-wide leading-relaxed line-clamp-2 mt-1">
+                      {category.description || `Exquisite handlooms selected for ${category.name} wear.`}
+                    </p>
                   </div>
                 </Link>
               </ScrollReveal>
-            ))
-          )}
+            );
+          })}
         </div>
       </section>
 
-      {/* ── SECTION 4: FEATURED PRODUCTS — reference collection grid ── */}
-      <section
-        id="products"
-        className="py-24 md:py-32"
-        style={{ backgroundColor: "rgba(245,243,238,0.4)" }}
-      >
-        <div className="container-x mx-auto max-w-[1400px]">
-          <div className="mb-14 text-center">
-            <ScrollReveal direction="up">
-              <p
-                className="mb-4 text-[11px] uppercase tracking-[0.32em]"
-                style={{ color: "var(--color-ink-muted)" }}
-              >
-                Featured Collection
-              </p>
-            </ScrollReveal>
-            <ScrollReveal direction="up" delay={0.1}>
-              <h2
-                className="mx-auto max-w-2xl font-display text-4xl leading-tight md:text-5xl font-light"
-                style={{ color: "var(--color-ink)" }}
-              >
-                The season&apos;s most quietly beautiful weaves.
-              </h2>
-            </ScrollReveal>
-          </div>
-
-          <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:gap-x-6 md:gap-y-14 lg:grid-cols-4">
-            {featuredProducts.map((product, idx) => (
-              <ScrollReveal key={product.id} direction="up" delay={idx * 0.04}>
-                <ProductCard product={product} />
-              </ScrollReveal>
-            ))}
-          </div>
-
-          <div className="mt-16 text-center">
-            <ScrollReveal direction="up">
-              <Link
-                href="/collections"
-                className="inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-[12px] uppercase tracking-[0.18em] transition-colors duration-300"
-                style={{
-                  border: "1px solid rgba(17,17,17,0.25)",
-                  color: "var(--color-ink)",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = "var(--color-ink)";
-                  (e.currentTarget as HTMLElement).style.backgroundColor = "var(--color-ink)";
-                  (e.currentTarget as HTMLElement).style.color = "var(--color-background)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(17,17,17,0.25)";
-                  (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-                  (e.currentTarget as HTMLElement).style.color = "var(--color-ink)";
-                }}
-              >
-                View the full collection
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                </svg>
-              </Link>
-            </ScrollReveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ── SECTION 5: WHY CHOOSE — reference 3-icon values section ── */}
-      <section className="container-x mx-auto max-w-[1400px] py-24 md:py-32">
-        <div className="grid gap-16 md:grid-cols-3 md:gap-10">
-          {values.map((v, i) => (
-            <ScrollReveal key={v.title} direction="up" delay={i * 0.1}>
-              <div className="flex flex-col items-start">
-                <div
-                  className="grid h-14 w-14 place-items-center rounded-full border text-xl"
-                  style={{
-                    borderColor: "rgba(201,166,107,0.4)",
-                    color: "var(--color-gold-ref)",
-                  }}
-                >
-                  {v.emoji}
-                </div>
-                <h3
-                  className="mt-6 font-display text-2xl"
-                  style={{ color: "var(--color-ink)" }}
-                >
-                  {v.title}
-                </h3>
-                <p
-                  className="mt-3 max-w-sm text-[15px] leading-relaxed"
-                  style={{ color: "var(--color-ink-muted)" }}
-                >
-                  {v.body}
-                </p>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ── SECTION 6: HERITAGE QUOTE STRIP (preserved from target) ── */}
-      <section
-        className="py-24 text-white relative border-y overflow-hidden"
-        style={{
-          backgroundColor: "var(--color-deep)",
-          borderColor: "rgba(201,166,107,0.15)",
-        }}
-      >
-        <div
-          className="absolute inset-0 flex items-center pointer-events-none opacity-[0.02] select-none"
-        >
-          <div
-            className="font-display text-[150px] uppercase font-semibold tracking-[0.2em] whitespace-nowrap animate-heritage-drift"
-            style={{ color: "var(--color-gold)" }}
-          >
+      {/* ── SECTION 4: HERITAGE DRIFT STRIP ── */}
+      <section className="bg-deep py-24 text-ivory relative border-y border-gold/15 overflow-hidden">
+        {/* Repeating text background drift */}
+        <div className="absolute inset-0 flex items-center pointer-events-none opacity-2 hover:opacity-3 transition-opacity duration-500 select-none">
+          <div className="font-display text-[150px] uppercase font-semibold tracking-[0.2em] whitespace-nowrap animate-heritage-drift text-gold/30">
             SAKHY HERITAGE SAKHY HERITAGE SAKHY HERITAGE SAKHY HERITAGE
           </div>
         </div>
 
-        <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-8 text-center flex flex-col items-center container-x">
+        <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-8 text-center flex flex-col items-center">
           <ScrollReveal direction="up">
-            <span
-              className="text-[10px] tracking-[0.4em] uppercase mb-8 block"
-              style={{ color: "var(--color-gold-ref)" }}
-            >
+            <span className="text-gold text-[10px] tracking-[0.4em] uppercase mb-8 block">
               62 Years of Preservation
             </span>
           </ScrollReveal>
+
           <ScrollReveal direction="up" delay={0.2}>
-            <p
-              className="font-display text-2xl sm:text-3xl italic font-light leading-relaxed max-w-3xl mb-8"
-              style={{ color: "rgba(245,239,233,0.8)" }}
-            >
-              &ldquo;A saree is not merely six yards of silk. It is a canvas of mathematical precision,
-              agricultural devotion, and spiritual handcrafting.&rdquo;
+            <p className="font-display text-2xl sm:text-3xl italic font-light leading-relaxed text-ivory/80 max-w-3xl mb-8">
+              &ldquo;A saree is not merely six yards of silk. It is a canvas of mathematical precision, agricultural devotion, and spiritual handcrafting.&rdquo;
             </p>
           </ScrollReveal>
+
           <ScrollReveal direction="up" delay={0.4}>
-            <span
-              className="font-sans text-[10px] tracking-[0.25em] uppercase"
-              style={{ color: "var(--color-gold-ref)" }}
-            >
+            <span className="font-sans text-[10px] tracking-[0.25em] uppercase text-gold">
               — The Weavers of Kanchipuram
             </span>
           </ScrollReveal>
         </div>
       </section>
 
-      {/* ── SECTION 7: STATS BAR (preserved) ── */}
-      <section
-        className="py-12 border-b"
-        style={{
-          backgroundColor: "rgba(232,220,200,0.25)",
-          borderColor: "rgba(201,166,107,0.1)",
-        }}
-      >
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      {/* ── SECTION 5: STATS BAR ── */}
+      <section className="bg-silk/25 py-12 border-b border-gold/10">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {[
             { label: "Sarees Handwoven", val: "10K+" },
             { label: "Artisan Weavers", val: "200+" },
@@ -475,16 +245,10 @@ export default async function HomePage() {
           ].map((stat, i) => (
             <ScrollReveal key={stat.label} direction="up" delay={i * 0.1}>
               <div className="flex flex-col gap-1.5">
-                <span
-                  className="font-display text-3xl font-light"
-                  style={{ color: "var(--color-gold-ref)" }}
-                >
+                <span className="font-display text-3xl text-gold font-light">
                   {stat.val}
                 </span>
-                <span
-                  className="text-[9px] font-sans tracking-[0.2em] uppercase font-light"
-                  style={{ color: "var(--color-muted)" }}
-                >
+                <span className="text-[9px] font-sans tracking-[0.2em] uppercase text-muted font-light">
                   {stat.label}
                 </span>
               </div>
@@ -493,94 +257,41 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── SECTION 8: TESTIMONIALS — reference-style centered auto-rotate ── */}
-      {testimonials.length > 0 && (
-        <section
-          className="py-24 md:py-32"
-          style={{ backgroundColor: "rgba(245,243,238,0.4)" }}
-        >
-          <div className="container-x mx-auto max-w-4xl text-center">
-            <ScrollReveal direction="up">
-              <p
-                className="mb-8 text-[11px] uppercase tracking-[0.32em]"
-                style={{ color: "var(--color-ink-muted)" }}
-              >
-                Kind Words
-              </p>
-            </ScrollReveal>
-          </div>
-          <div className="container-x mx-auto max-w-7xl">
-            <TestimonialCarousel testimonials={testimonials} speed={36} />
-          </div>
-        </section>
-      )}
-
-      {/* ── SECTION 9: PROCESS STEPS (preserved) ── */}
-      <section
-        id="process"
-        className="py-24 px-6 sm:px-8 max-w-[1400px] mx-auto border-b"
-        style={{ borderColor: "rgba(201,166,107,0.1)" }}
-      >
+      {/* ── SECTION 6: FEATURED PRODUCTS ── */}
+      <section id="products" className="py-24 px-6 sm:px-8 max-w-7xl mx-auto">
         <ScrollReveal direction="up">
-          <SectionHeading tag="Artisan Journey" title="Path of the *Six Yards*" />
+          <SectionHeading tag="Featured Masterpieces" title="The Heirloom *Selection*" />
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {processSteps.map((step, idx) => (
-            <ScrollReveal key={step.num} direction="up" delay={idx * 0.1}>
-              <div className="flex flex-col gap-4 relative">
-                <span
-                  className="font-display text-5xl font-light"
-                  style={{ color: "rgba(201,166,107,0.25)" }}
-                >
-                  {step.num}
-                </span>
-                <h3
-                  className="font-display text-lg font-normal"
-                  style={{ color: "var(--color-charcoal)" }}
-                >
-                  {step.title}
-                </h3>
-                <p
-                  className="text-xs leading-relaxed"
-                  style={{ color: "var(--color-muted)" }}
-                >
-                  {step.desc}
-                </p>
-              </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+          {featuredProducts.map((product, idx) => (
+            <ScrollReveal key={product.id} direction="up" delay={idx * 0.1}>
+              <ProductCard product={product} />
             </ScrollReveal>
           ))}
         </div>
+
+        <div className="flex justify-center">
+          <ScrollReveal direction="up">
+            <Button variant="outline" size="lg" href="/collections">
+              View All Creations
+            </Button>
+          </ScrollReveal>
+        </div>
       </section>
 
-      {/* ── SECTION 10: WEAVES SHOWCASE (preserved) ── */}
-      <section
-        id="weaves"
-        className="py-24 border-y text-white"
-        style={{
-          backgroundColor: "var(--color-deep)",
-          borderColor: "rgba(201,166,107,0.15)",
-        }}
-      >
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-8">
+      {/* ── SECTION 7: WEAVES SHOWCASE ── */}
+      <section id="weaves" className="bg-deep py-24 border-y border-gold/15 text-ivory">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8">
           <ScrollReveal direction="up">
             <div className="text-center mb-16 flex flex-col items-center">
-              <span
-                className="text-[10px] tracking-[0.4em] uppercase mb-4 block font-sans font-light"
-                style={{ color: "var(--color-gold-ref)" }}
-              >
+              <span className="text-gold text-[10px] tracking-[0.4em] uppercase mb-4 block font-sans font-light">
                 Regional Hubs
               </span>
-              <h2
-                className="font-display text-4xl font-light leading-snug"
-                style={{ color: "white" }}
-              >
-                Chronicles of the Loom
+              <h2 className="font-display text-4xl text-ivory font-light leading-snug">
+                Chronicles of the *Loom*
               </h2>
-              <div
-                className="w-12 h-[1px] mt-5"
-                style={{ backgroundColor: "rgba(201,166,107,0.45)" }}
-              />
+              <div className="w-12 h-[1px] bg-gold/45 mt-5" />
             </div>
           </ScrollReveal>
 
@@ -592,35 +303,14 @@ export default async function HomePage() {
               { hub: "Chanderi", tag: "Madhya Pradesh", text: "Light sheer weaves, cotton-silk mix, subtle golden bootis." },
             ].map((weave, idx) => (
               <ScrollReveal key={weave.hub} direction="up" delay={idx * 0.1}>
-                <div
-                  className="border p-6 transition-colors duration-500 h-full flex flex-col"
-                  style={{
-                    borderColor: "rgba(201,166,107,0.15)",
-                    backgroundColor: "rgba(44,36,22,0.2)",
-                  }}
-                  onMouseEnter={(e) =>
-                    ((e.currentTarget as HTMLElement).style.borderColor = "rgba(201,166,107,0.4)")
-                  }
-                  onMouseLeave={(e) =>
-                    ((e.currentTarget as HTMLElement).style.borderColor = "rgba(201,166,107,0.15)")
-                  }
-                >
-                  <span
-                    className="font-display text-lg mb-1 block"
-                    style={{ color: "var(--color-gold-ref)" }}
-                  >
+                <div className="border border-gold/15 p-6 hover:border-gold/40 transition-colors duration-500 h-full flex flex-col bg-charcoal/20">
+                  <span className="text-gold font-display text-lg mb-1 block">
                     {weave.hub}
                   </span>
-                  <span
-                    className="text-[8px] font-sans tracking-widest uppercase mb-4 block"
-                    style={{ color: "var(--color-muted)" }}
-                  >
+                  <span className="text-[8px] font-sans text-muted tracking-widest uppercase mb-4 block">
                     {weave.tag}
                   </span>
-                  <p
-                    className="text-[11px] font-sans font-light tracking-wide leading-relaxed mt-auto"
-                    style={{ color: "rgba(245,239,233,0.5)" }}
-                  >
+                  <p className="text-[11px] font-sans font-light tracking-wide text-ivory/50 leading-relaxed mt-auto">
                     {weave.text}
                   </p>
                 </div>
@@ -630,6 +320,42 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ── SECTION 8: PROCESS STEPS ── */}
+      <section id="process" className="py-24 px-6 sm:px-8 max-w-7xl mx-auto border-b border-gold/10">
+        <ScrollReveal direction="up">
+          <SectionHeading tag="Artisan Journey" title="Path of the *Six Yards*" />
+        </ScrollReveal>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {processSteps.map((step, idx) => (
+            <ScrollReveal key={step.num} direction="up" delay={idx * 0.1}>
+              <div className="flex flex-col gap-4 relative">
+                <span className="font-display text-5xl text-gold/25 font-light">
+                  {step.num}
+                </span>
+                <h3 className="font-display text-lg text-charcoal font-normal">
+                  {step.title}
+                </h3>
+                <p className="text-xs text-muted leading-relaxed">
+                  {step.desc}
+                </p>
+              </div>
+            </ScrollReveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ── SECTION 9: TESTIMONIALS ── */}
+      {testimonials.length > 0 && (
+        <section id="testimonials" className="bg-silk/20 py-24 border-b border-gold/10">
+          <ScrollReveal direction="up">
+            <SectionHeading tag="Patron Accounts" title="Worn with *Pride*" />
+          </ScrollReveal>
+          <div className="max-w-7xl mx-auto px-6 sm:px-8">
+            <TestimonialCarousel testimonials={testimonials} speed={36} />
+          </div>
+        </section>
+      )}
     </div>
   );
 }

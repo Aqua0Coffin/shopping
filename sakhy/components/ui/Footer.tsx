@@ -3,19 +3,11 @@
 import React, { useState } from "react";
 import Link from "next/link";
 
-/**
- * Footer — reference-styled light theme:
- * - Light background (bg-secondary/30) replacing dark bg-deep
- * - Ink text instead of ivory
- * - Social icons as rounded-full bordered buttons (reference pattern)
- * - Same functional newsletter API call preserved
- */
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
 
-  // Newsletter subscription — API call fully preserved
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
@@ -42,212 +34,123 @@ export default function Footer() {
     }
   };
 
-  const cols = [
-    {
-      title: "House",
-      items: [
-        { label: "Our Heritage", href: "/heritage" },
-        { label: "Saree Care Guide", href: "/care-guide" },
-        { label: "Journal", href: "#" },
-        { label: "Ateliers", href: "#" },
-      ],
-    },
-    {
-      title: "Shop",
-      items: [
-        { label: "All Creations", href: "/collections" },
-        { label: "The Bridal Edit", href: "/collections/bridal" },
-        { label: "Festive Weaves", href: "/collections/festive" },
-        { label: "Classic Everyday", href: "/collections/everyday" },
-      ],
-    },
-    {
-      title: "Care",
-      items: [
-        { label: "Consultation Booking", href: "/contact" },
-        { label: "Shipping & Returns", href: "/shipping" },
-        { label: "Orders", href: "/orders" },
-        { label: "Privacy Policy", href: "#" },
-      ],
-    },
-  ];
-
   return (
-    <footer
-      className="border-t pt-16 pb-8 px-6 sm:px-8 font-sans font-light"
-      style={{
-        backgroundColor: "rgba(245,243,238,0.5)", // reference bg-secondary/30
-        borderColor: "var(--color-border-light)",
-      }}
-    >
-      <div className="container-x mx-auto max-w-[1400px]">
-        <div className="grid gap-12 md:grid-cols-4 mb-16">
-          {/* Column 1: Brand */}
-          <div>
-            <Link
-              href="/"
-              className="font-display text-2xl tracking-[0.22em] transition-colors duration-300 hover:opacity-70 w-fit block"
-              style={{ color: "var(--color-ink)" }}
-            >
-              SAKHY
-            </Link>
-            <p
-              className="mt-4 max-w-xs text-sm leading-relaxed"
-              style={{ color: "var(--color-ink-muted)" }}
-            >
-              A quiet luxury saree house. Handwoven in India, for the modern
-              woman.
-            </p>
-            <div className="mt-6 flex gap-2">
-              {["Instagram", "Pinterest", "WhatsApp"].map((social) => (
-                <a
-                  key={social}
-                  href="#"
-                  aria-label={social}
-                  className="grid h-9 w-9 place-items-center rounded-full border transition-all duration-300 text-xs"
-                  style={{
-                    borderColor: "var(--color-border-light)",
-                    color: "var(--color-ink)",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = "var(--color-ink)";
-                    (e.currentTarget as HTMLElement).style.backgroundColor = "var(--color-ink)";
-                    (e.currentTarget as HTMLElement).style.color = "var(--color-background)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = "var(--color-border-light)";
-                    (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-                    (e.currentTarget as HTMLElement).style.color = "var(--color-ink)";
-                  }}
-                >
-                  {social[0]}
-                </a>
-              ))}
-            </div>
-          </div>
-
-          {/* Columns 2-4: Navigation */}
-          {cols.map((col) => (
-            <div key={col.title}>
-              <p
-                className="mb-5 text-[11px] uppercase tracking-[0.28em] font-medium"
-                style={{ color: "var(--color-ink)" }}
+    <footer className="bg-deep text-ivory/60 border-t border-gold/15 pt-20 pb-12 px-6 sm:px-8 font-sans font-light">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 sm:gap-16 mb-16">
+        {/* Column 1: Brand & Tagline */}
+        <div className="flex flex-col gap-6">
+          <Link
+            href="/"
+            className="font-display text-2xl tracking-[0.3em] text-ivory hover:text-gold transition-colors duration-300 w-fit"
+          >
+            SAKHY
+          </Link>
+          <p className="text-xs leading-relaxed tracking-wider text-ivory/50">
+            A premium heritage-saree brand dedicated to preserving India&apos;s oldest weaving traditions. Every saree is an heirloom, hand-woven with pure zari and unmatched skill.
+          </p>
+          <div className="flex gap-4 items-center mt-2">
+            {["Instagram", "Pinterest", "WhatsApp"].map((social) => (
+              <a
+                key={social}
+                href="#"
+                className="text-[10px] uppercase tracking-[0.2em] text-gold hover:text-gold-light transition-colors duration-300"
               >
-                {col.title}
-              </p>
-              <ul className="space-y-3">
-                {col.items.map((item) => (
-                  <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      className="text-sm transition-colors duration-200"
-                      style={{ color: "var(--color-ink-muted)" }}
-                      onMouseEnter={(e) =>
-                        ((e.currentTarget as HTMLElement).style.color = "var(--color-ink)")
-                      }
-                      onMouseLeave={(e) =>
-                        ((e.currentTarget as HTMLElement).style.color = "var(--color-ink-muted)")
-                      }
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+                {social}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Column 2: Collections Links */}
+        <div className="flex flex-col gap-5">
+          <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-normal">
+            Collections
+          </span>
+          <div className="flex flex-col gap-3 text-xs tracking-wider">
+            <Link href="/collections/bridal" className="hover:text-gold transition-colors duration-300">
+              The Bridal Edit
+            </Link>
+            <Link href="/collections/festive" className="hover:text-gold transition-colors duration-300">
+              Festive Weaves
+            </Link>
+            <Link href="/collections/everyday" className="hover:text-gold transition-colors duration-300">
+              Classic Everyday
+            </Link>
+            <Link href="/collections" className="hover:text-gold transition-colors duration-300">
+              All Creations
+            </Link>
+          </div>
+        </div>
+
+        {/* Column 3: Quick Links */}
+        <div className="flex flex-col gap-5">
+          <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-normal">
+            Heirloom Guide
+          </span>
+          <div className="flex flex-col gap-3 text-xs tracking-wider">
+            <Link href="/heritage" className="hover:text-gold transition-colors duration-300">
+              Our Heritage
+            </Link>
+            <Link href="/care-guide" className="hover:text-gold transition-colors duration-300">
+              Saree Care Guide
+            </Link>
+            <Link href="/shipping" className="hover:text-gold transition-colors duration-300">
+              Shipping & Returns
+            </Link>
+            <Link href="/contact" className="hover:text-gold transition-colors duration-300">
+              Consultation Booking
+            </Link>
+          </div>
+        </div>
+
+        {/* Column 4: Newsletter */}
+        <div className="flex flex-col gap-5">
+          <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-normal">
+            The Chronicle
+          </span>
+          <p className="text-xs leading-relaxed text-ivory/50">
+            Subscribe to receive insights into rare weave preservation and preview new collections.
+          </p>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
+            <div className="flex border-b border-gold/40 focus-within:border-gold transition-colors duration-300">
+              <input
+                type="email"
+                required
+                placeholder="Email Address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-transparent border-none text-xs py-2 w-full text-ivory focus:outline-none placeholder-ivory/30 tracking-widest"
+              />
+              <button
+                type="submit"
+                disabled={status === "loading"}
+                className="text-gold hover:text-gold-light transition-colors duration-300 px-2 py-1 text-[10px] uppercase tracking-widest cursor-pointer"
+              >
+                {status === "loading" ? "..." : "Join"}
+              </button>
             </div>
-          ))}
-        </div>
-
-        {/* Newsletter — reference-style centered box */}
-        <div
-          className="mx-auto max-w-3xl rounded-xl border p-10 text-center md:p-16 mb-16"
-          style={{
-            backgroundColor: "var(--color-background)",
-            borderColor: "var(--color-border-light)",
-          }}
-        >
-          <p
-            className="mb-4 text-[11px] uppercase tracking-[0.32em]"
-            style={{ color: "var(--color-gold-ref)" }}
-          >
-            The Letter
-          </p>
-          <h2
-            className="font-display text-4xl leading-tight md:text-5xl mb-4"
-            style={{ color: "var(--color-ink)" }}
-          >
-            Stay Inspired
-          </h2>
-          <p
-            className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed mb-8"
-            style={{ color: "var(--color-ink-muted)" }}
-          >
-            Be the first to discover new collections, private previews and
-            occasional atelier notes.
-          </p>
-          <form
-            onSubmit={handleSubmit}
-            className="mx-auto flex max-w-md flex-col gap-2 sm:flex-row"
-          >
-            <input
-              type="email"
-              required
-              placeholder="Your email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 rounded-full px-5 py-3.5 text-sm transition-colors duration-200 focus:outline-none"
-              style={{
-                border: `1px solid var(--color-border-light)`,
-                backgroundColor: "var(--color-background)",
-                color: "var(--color-ink)",
-              }}
-              onFocus={(e) =>
-                ((e.currentTarget as HTMLElement).style.borderColor = "var(--color-ink)")
-              }
-              onBlur={(e) =>
-                ((e.currentTarget as HTMLElement).style.borderColor = "var(--color-border-light)")
-              }
-            />
-            <button
-              type="submit"
-              disabled={status === "loading"}
-              className="rounded-full px-6 py-3.5 text-[12px] uppercase tracking-[0.18em] transition-colors duration-200 disabled:opacity-60"
-              style={{
-                backgroundColor: "var(--color-ink)",
-                color: "var(--color-background)",
-              }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor = "rgba(17,17,17,0.85)")
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor = "var(--color-ink)")
-              }
-            >
-              {status === "loading" ? "..." : "Subscribe"}
-            </button>
+            {message && (
+              <p
+                className={`text-[10px] tracking-wider mt-1 leading-relaxed ${
+                  status === "error" ? "text-red-400" : "text-gold/80"
+                }`}
+              >
+                {message}
+              </p>
+            )}
           </form>
-          {message && (
-            <p
-              className="text-[11px] tracking-wider mt-3 leading-relaxed"
-              style={{ color: status === "error" ? "#dc2626" : "var(--color-gold-ref)" }}
-            >
-              {message}
-            </p>
-          )}
         </div>
+      </div>
 
-        {/* Footer Bottom */}
-        <div
-          className="flex flex-col items-center justify-between gap-4 border-t pt-8 text-xs md:flex-row"
-          style={{
-            borderColor: "var(--color-border-light)",
-            color: "var(--color-ink-muted)",
-          }}
-        >
-          <p>© 2026 Sakhy Atelier. All rights reserved.</p>
-          <p className="tracking-[0.2em] uppercase">
-            Handwoven in India · Shipped worldwide
-          </p>
+      {/* Footer Bottom */}
+      <div className="max-w-7xl mx-auto pt-8 border-t border-gold/10 flex flex-col sm:flex-row justify-between items-center gap-6 text-[10px] tracking-[0.2em] uppercase text-ivory/40">
+        <div>
+          <span>© 2026 SAKHY HERITAGE. ALL RIGHTS RESERVED.</span>
+        </div>
+        
+        {/* Payment Icons */}
+        <div className="flex gap-4 items-center">
+          <span>UPI / CARDS / RAZORPAY</span>
         </div>
       </div>
     </footer>
